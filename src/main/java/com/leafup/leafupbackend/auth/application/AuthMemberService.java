@@ -1,8 +1,8 @@
 package com.leafup.leafupbackend.auth.application;
 
-import com.leafup.leafupbackend.auth.api.dto.response.MemberLoginResDto;
 import com.leafup.leafupbackend.auth.api.dto.response.UserInfo;
 import com.leafup.leafupbackend.auth.exception.ExistsMemberEmailException;
+import com.leafup.leafupbackend.member.api.dto.response.MemberInfoResDto;
 import com.leafup.leafupbackend.member.domain.Member;
 import com.leafup.leafupbackend.member.domain.SocialType;
 import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
@@ -19,12 +19,19 @@ public class AuthMemberService {
     private final MemberRepository memberRepository;
 
     @Transactional
-    public MemberLoginResDto saveUserInfo(UserInfo userInfo, SocialType provider) {
+    public MemberInfoResDto saveUserInfo(UserInfo userInfo, SocialType provider) {
         Member member = getExistingMemberOrCreateNew(userInfo, provider);
 
         validateSocialType(member, provider);
 
-        return MemberLoginResDto.from(member);
+        return MemberInfoResDto.of(member.getEmail(),
+                member.getPicture(),
+                String.valueOf(member.getSocialType()),
+                member.isFirstLogin(),
+                member.getNickname(),
+                member.getCode(),
+                member.isLocationAgreed(),
+                member.isCameraAccessAllowed());
     }
 
     private Member getExistingMemberOrCreateNew(UserInfo userInfo, SocialType provider) {

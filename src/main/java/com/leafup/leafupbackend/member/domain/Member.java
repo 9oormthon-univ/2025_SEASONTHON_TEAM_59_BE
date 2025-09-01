@@ -23,12 +23,34 @@ public class Member extends BaseEntity {
     @Enumerated(value = EnumType.STRING)
     private SocialType socialType;
 
+    private boolean isFirstLogin;
+
+    private String nickname;
+
+    private String code;
+
+    private boolean isLocationAgreed;
+
+    private boolean isCameraAccessAllowed;
+
     @Builder
     private Member(String email, String name, String picture, SocialType socialType) {
         this.email = email;
         this.name = name;
         this.picture = picture;
         this.socialType = socialType;
+        this.isFirstLogin = true;
+    }
+
+    public void updateFirstLogin() {
+        this.isFirstLogin = false;
+    }
+
+    public void onboarding(String nickname, String code, boolean isLocationAgreed, boolean isCameraAccessAllowed) {
+        this.nickname = nickname;
+        this.code = code;
+        this.isLocationAgreed = isLocationAgreed;
+        this.isCameraAccessAllowed = isCameraAccessAllowed;
     }
 
 }

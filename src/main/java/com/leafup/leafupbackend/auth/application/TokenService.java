@@ -1,12 +1,12 @@
 package com.leafup.leafupbackend.auth.application;
 
 import com.leafup.leafupbackend.auth.api.dto.request.RefreshTokenReqDto;
-import com.leafup.leafupbackend.auth.api.dto.response.MemberLoginResDto;
 import com.leafup.leafupbackend.auth.exception.InvalidTokenException;
 import com.leafup.leafupbackend.global.jwt.TokenProvider;
 import com.leafup.leafupbackend.global.jwt.api.dto.TokenDto;
 import com.leafup.leafupbackend.global.jwt.domain.Token;
 import com.leafup.leafupbackend.global.jwt.domain.repository.TokenRepository;
+import com.leafup.leafupbackend.member.api.dto.response.MemberInfoResDto;
 import com.leafup.leafupbackend.member.domain.Member;
 import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
 import com.leafup.leafupbackend.member.exception.MemberNotFoundException;
@@ -24,10 +24,10 @@ public class TokenService {
     private final MemberRepository memberRepository;
 
     @Transactional
-    public TokenDto getToken(MemberLoginResDto memberLoginResDto) {
-        TokenDto tokenDto = tokenProvider.generateToken(memberLoginResDto.findMember().getEmail());
+    public TokenDto getToken(MemberInfoResDto memberInfoResDto) {
+        TokenDto tokenDto = tokenProvider.generateToken(memberInfoResDto.email());
 
-        tokenSaveAndUpdate(memberLoginResDto, tokenDto);
+        tokenSaveAndUpdate(memberInfoResDto, tokenDto);
 
         return tokenDto;
     }
@@ -45,19 +45,23 @@ public class TokenService {
         return tokenProvider.generateAccessTokenByRefreshToken(member.getEmail(), token.getRefreshToken());
     }
 
-    private void tokenSaveAndUpdate(MemberLoginResDto memberLoginResDto, TokenDto tokenDto) {
-        if (!tokenRepository.existsByMember(memberLoginResDto.findMember())) {
+    private void tokenSaveAndUpdate(MemberInfoResDto memberInfoResDto, TokenDto tokenDto) {
+        Member member = memberRepository.findByEmail(memberInfoResDto.email()).orElseThrow(MemberNotFoundException::new);
+
+        if (!tokenRepository.existsByMember(member)) {
             tokenRepository.save(Token.builder()
-                    .member(memberLoginResDto.findMember())
+                    .member(member)
                     .refreshToken(tokenDto.refreshToken())
                     .build());
         }
 
-        refreshTokenUpdate(memberLoginResDto, tokenDto);
+        refreshTokenUpdate(memberInfoResDto, tokenDto);
     }
 
-    private void refreshTokenUpdate(MemberLoginResDto memberLoginResDto, TokenDto tokenDto) {
-        Token token = tokenRepository.findByMember(memberLoginResDto.findMember()).orElseThrow();
+    private void refreshTokenUpdate(MemberInfoResDto memberInfoResDto, TokenDto tokenDto) {
+        Member member = memberRepository.findByEmail(memberInfoResDto.email()).orElseThrow(MemberNotFoundException::new);
+
+        Token token = tokenRepository.findByMember(member).orElseThrow();
         token.refreshTokenUpdate(tokenDto.refreshToken());
     }
 

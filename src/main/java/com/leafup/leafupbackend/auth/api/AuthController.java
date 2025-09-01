@@ -2,13 +2,14 @@ package com.leafup.leafupbackend.auth.api;
 
 import com.github.giwoong01.springapicommon.template.RspTemplate;
 import com.leafup.leafupbackend.auth.api.dto.request.RefreshTokenReqDto;
-import com.leafup.leafupbackend.auth.api.dto.response.MemberLoginResDto;
+import com.leafup.leafupbackend.auth.api.dto.response.MemberAndTokenResDto;
 import com.leafup.leafupbackend.auth.api.dto.response.UserInfo;
 import com.leafup.leafupbackend.auth.application.AuthMemberService;
 import com.leafup.leafupbackend.auth.application.AuthService;
 import com.leafup.leafupbackend.auth.application.AuthServiceFactory;
 import com.leafup.leafupbackend.auth.application.TokenService;
 import com.leafup.leafupbackend.global.jwt.api.dto.TokenDto;
+import com.leafup.leafupbackend.member.api.dto.response.MemberInfoResDto;
 import com.leafup.leafupbackend.member.domain.SocialType;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -48,20 +49,20 @@ public class AuthController implements AuthControllerDocs {
     }
 
     @GetMapping("/callback/{provider}")
-    public ResponseEntity<RspTemplate<TokenDto>> generateAccessAndRefreshToken(
+    public ResponseEntity<RspTemplate<MemberAndTokenResDto>> generateAccessAndRefreshToken(
             @Parameter(name = "provider", description = "소셜 타입(google, kakao)", in = ParameterIn.PATH)
             @PathVariable(name = "provider") String provider,
             @RequestParam("code") String code) {
         AuthService authService = authServiceFactory.getAuthService(provider);
         UserInfo userInfo = authService.getUserInfo(code);
 
-        MemberLoginResDto getMemberDto = memberService.saveUserInfo(userInfo,
+        MemberInfoResDto getMemberDto = memberService.saveUserInfo(userInfo,
                 SocialType.valueOf(provider.toUpperCase()));
         TokenDto getToken = tokenService.getToken(getMemberDto);
 
-        return RspTemplate.<TokenDto>builder()
+        return RspTemplate.<MemberAndTokenResDto>builder()
                 .statusCode(HttpStatus.OK)
-                .data(getToken)
+                .data(MemberAndTokenResDto.of(getToken, getMemberDto))
                 .build()
                 .toResponseEntity();
     }

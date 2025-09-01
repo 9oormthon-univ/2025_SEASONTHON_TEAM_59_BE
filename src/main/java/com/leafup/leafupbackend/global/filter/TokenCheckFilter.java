@@ -25,7 +25,8 @@ public class TokenCheckFilter extends GenericFilterBean {
             "/api/v1/ping",
             "/api/v1/oauth2/**",
             "/swagger-ui/**",
-            "/v3/api-docs/**"
+            "/v3/api-docs/**",
+            "/h2-console/**"
     );
 
     @Override

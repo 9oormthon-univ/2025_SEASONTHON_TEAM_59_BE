@@ -2,6 +2,7 @@ package com.leafup.leafupbackend.auth.api;
 
 import com.github.giwoong01.springapicommon.template.RspTemplate;
 import com.leafup.leafupbackend.auth.api.dto.request.RefreshTokenReqDto;
+import com.leafup.leafupbackend.auth.api.dto.response.MemberAndTokenResDto;
 import com.leafup.leafupbackend.global.jwt.api.dto.TokenDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,7 +28,7 @@ public interface AuthControllerDocs {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "토큰 발급 성공")
     })
-    ResponseEntity<RspTemplate<TokenDto>> generateAccessAndRefreshToken(
+    ResponseEntity<RspTemplate<MemberAndTokenResDto>> generateAccessAndRefreshToken(
             @Parameter(name = "provider", description = "소셜 타입(google, kakao)", in = ParameterIn.PATH)
             @PathVariable(name = "provider") String provider,
             @RequestParam("code") String code);
