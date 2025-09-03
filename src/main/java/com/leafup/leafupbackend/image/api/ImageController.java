@@ -20,16 +20,16 @@ public class ImageController implements ImageControllerDocs {
 
     private final ImageService imageService;
 
-    @PostMapping("/upload")
-    public ResponseEntity<RspTemplate<String>> imageUpload(@AuthenticatedEmail String email,
-                                                           @RequestPart("multipartFile") MultipartFile multipartFile)
-            throws IOException {
-        return RspTemplate.<String>builder()
-                .statusCode(HttpStatus.OK)
-                .data(imageService.imageUpload(email, multipartFile))
-                .build()
-                .toResponseEntity();
-    }
+//    @PostMapping("/upload")
+//    public ResponseEntity<RspTemplate<String>> imageUpload(@AuthenticatedEmail String email,
+//                                                           @RequestPart("multipartFile") MultipartFile multipartFile)
+//            throws IOException {
+//        return RspTemplate.<String>builder()
+//                .statusCode(HttpStatus.OK)
+//                .data(imageService.imageUpload(email, multipartFile))
+//                .build()
+//                .toResponseEntity();
+//    }
 
     @PostMapping("/profile/upload")
     public ResponseEntity<RspTemplate<String>> imageProfileUpload(@AuthenticatedEmail String email,
