@@ -33,6 +33,8 @@ public class Member extends BaseEntity {
 
     private boolean isCameraAccessAllowed;
 
+    private String address;
+
     @Builder
     private Member(String email, String name, String picture, SocialType socialType) {
         this.email = email;
@@ -46,11 +48,17 @@ public class Member extends BaseEntity {
         this.isFirstLogin = false;
     }
 
-    public void onboarding(String nickname, String code, boolean isLocationAgreed, boolean isCameraAccessAllowed) {
+    public void onboarding(String nickname, String code, boolean isLocationAgreed,
+                           boolean isCameraAccessAllowed, String address) {
         this.nickname = nickname;
         this.code = code;
         this.isLocationAgreed = isLocationAgreed;
         this.isCameraAccessAllowed = isCameraAccessAllowed;
+        this.address = address;
+    }
+
+    public void updatePicture(String picture) {
+        this.picture = picture;
     }
 
 }

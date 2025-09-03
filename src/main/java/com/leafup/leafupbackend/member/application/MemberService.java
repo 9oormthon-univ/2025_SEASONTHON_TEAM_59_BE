@@ -30,7 +30,8 @@ public class MemberService {
         member.onboarding(onboardingReqDto.nickname(),
                 code,
                 onboardingReqDto.locationAgreed(),
-                onboardingReqDto.cameraAccessAllowed());
+                onboardingReqDto.cameraAccessAllowed(),
+                onboardingReqDto.address());
 
         member.updateFirstLogin();
 
