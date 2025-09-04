@@ -39,7 +39,7 @@ public class ImageService {
         Storage storage = getStorage();
         Member member = memberRepository.findByEmail(email).orElseThrow(MemberNotFoundException::new);
 
-        String filePath = "leafup/member/images/" + member.getId() + "/" + uuid;
+        String filePath = "leafup/member/challenge/" + member.getId() + "/" + uuid;
         String imgUrl = getImgUrl(filePath);
 
         storageSave(multipartFile, filePath, storage);

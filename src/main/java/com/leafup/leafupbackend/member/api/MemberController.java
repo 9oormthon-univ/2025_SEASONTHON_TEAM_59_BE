@@ -2,6 +2,7 @@ package com.leafup.leafupbackend.member.api;
 
 import com.github.giwoong01.springapicommon.template.RspTemplate;
 import com.leafup.leafupbackend.global.annotation.AuthenticatedEmail;
+import com.leafup.leafupbackend.member.api.docs.MemberControllerDocs;
 import com.leafup.leafupbackend.member.api.dto.request.OnboardingReqDto;
 import com.leafup.leafupbackend.member.api.dto.response.MemberInfoResDto;
 import com.leafup.leafupbackend.member.application.MemberService;

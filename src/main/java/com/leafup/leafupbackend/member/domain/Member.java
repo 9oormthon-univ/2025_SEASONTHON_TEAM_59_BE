@@ -35,6 +35,10 @@ public class Member extends BaseEntity {
 
     private String address;
 
+    private int point;
+
+    private int currentStage;
+
     @Builder
     private Member(String email, String name, String picture, SocialType socialType) {
         this.email = email;
@@ -42,6 +46,8 @@ public class Member extends BaseEntity {
         this.picture = picture;
         this.socialType = socialType;
         this.isFirstLogin = true;
+        this.point = 0;
+        this.currentStage = 1;
     }
 
     public void updateFirstLogin() {
@@ -59,6 +65,23 @@ public class Member extends BaseEntity {
 
     public void updatePicture(String picture) {
         this.picture = picture;
+    }
+
+    public void plusStage() {
+        this.currentStage += 1;
+    }
+
+    public void plusPoint(int point) {
+        this.point += point;
+    }
+
+    public void minusPoint(int point) {
+        if (point <= 0) {
+            // 불가능.
+            return;
+        }
+
+        this.point -= point;
     }
 
 }
