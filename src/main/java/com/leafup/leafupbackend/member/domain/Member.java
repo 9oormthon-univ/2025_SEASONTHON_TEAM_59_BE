@@ -71,6 +71,10 @@ public class Member extends BaseEntity {
         this.currentStage += 1;
     }
 
+    public void updateCurrentStage(int currentStage) {
+        this.currentStage = currentStage;
+    }
+
     public void plusPoint(int point) {
         this.point += point;
     }

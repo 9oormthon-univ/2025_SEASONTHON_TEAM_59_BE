@@ -18,6 +18,7 @@ import com.leafup.leafupbackend.member.exception.MemberNotFoundException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,6 +53,8 @@ public class DailyChallengeService {
 
         // 오늘 일일 챌린지가 비었다면 새로 생성
         if (todaysChallenges.isEmpty()) {
+            updateStageBasedOnSubmissionOrder(member);
+
             todaysChallenges = createNewDailyChallenges(member, today);
         }
 
@@ -136,6 +139,41 @@ public class DailyChallengeService {
                     .build();
 
             dailyMemberChallengeRepository.save(newDmc);
+        }
+    }
+
+    // 챌린지 반려 되었을 때 해당 스테이지로 현재 스테이지 수정
+    private void updateStageBasedOnSubmissionOrder(Member member) {
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        List<DailyMemberChallenge> yesterdaysDmcs = dailyMemberChallengeRepository
+                .findByMemberAndChallengeDate(member, yesterday);
+
+        if (yesterdaysDmcs.isEmpty()) {
+            return;
+        }
+
+        List<DailyMemberChallengeImage> yesterdaysImages = dailyMemberChallengeImageRepository
+                .findByDailyMemberChallengeIn(yesterdaysDmcs);
+
+        if (yesterdaysImages.isEmpty()) {
+            return;
+        }
+
+        yesterdaysImages.sort(Comparator.comparing(DailyMemberChallengeImage::getId));
+
+        int revertStage = -1;
+
+        for (int i = 0; i < yesterdaysImages.size(); i++) {
+            DailyMemberChallengeImage image = yesterdaysImages.get(i);
+            if (image.getDailyMemberChallenge().getChallengeStatus() == ChallengeStatus.REJECTED) {
+                revertStage = i + 1;
+                break;
+            }
+        }
+
+        if (revertStage != -1) {
+            member.updateCurrentStage(revertStage);
+            memberRepository.save(member);
         }
     }
 
