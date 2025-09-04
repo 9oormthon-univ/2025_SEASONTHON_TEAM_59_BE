@@ -2,6 +2,7 @@ package com.leafup.leafupbackend.image.api;
 
 import com.github.giwoong01.springapicommon.template.RspTemplate;
 import com.leafup.leafupbackend.global.annotation.AuthenticatedEmail;
+import com.leafup.leafupbackend.image.api.docs.ImageControllerDocs;
 import com.leafup.leafupbackend.image.application.ImageService;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
@@ -20,16 +21,16 @@ public class ImageController implements ImageControllerDocs {
 
     private final ImageService imageService;
 
-//    @PostMapping("/upload")
-//    public ResponseEntity<RspTemplate<String>> imageUpload(@AuthenticatedEmail String email,
-//                                                           @RequestPart("multipartFile") MultipartFile multipartFile)
-//            throws IOException {
-//        return RspTemplate.<String>builder()
-//                .statusCode(HttpStatus.OK)
-//                .data(imageService.imageUpload(email, multipartFile))
-//                .build()
-//                .toResponseEntity();
-//    }
+    @PostMapping("/challenge/upload")
+    public ResponseEntity<RspTemplate<String>> imageChallengeUpload(@AuthenticatedEmail String email,
+                                                                    @RequestPart("multipartFile") MultipartFile multipartFile)
+            throws IOException {
+        return RspTemplate.<String>builder()
+                .statusCode(HttpStatus.OK)
+                .data(imageService.imageUpload(email, multipartFile))
+                .build()
+                .toResponseEntity();
+    }
 
     @PostMapping("/profile/upload")
     public ResponseEntity<RspTemplate<String>> imageProfileUpload(@AuthenticatedEmail String email,

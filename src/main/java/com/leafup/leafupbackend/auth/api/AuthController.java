@@ -1,6 +1,7 @@
 package com.leafup.leafupbackend.auth.api;
 
 import com.github.giwoong01.springapicommon.template.RspTemplate;
+import com.leafup.leafupbackend.auth.api.docs.AuthControllerDocs;
 import com.leafup.leafupbackend.auth.api.dto.request.RefreshTokenReqDto;
 import com.leafup.leafupbackend.auth.api.dto.response.MemberAndTokenResDto;
 import com.leafup.leafupbackend.auth.api.dto.response.UserInfo;

@@ -1,4 +1,4 @@
-package com.leafup.leafupbackend.member.api;
+package com.leafup.leafupbackend.member.api.docs;
 
 import com.github.giwoong01.springapicommon.template.RspTemplate;
 import com.leafup.leafupbackend.global.annotation.AuthenticatedEmail;

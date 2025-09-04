@@ -1,4 +1,4 @@
-package com.leafup.leafupbackend.auth.api;
+package com.leafup.leafupbackend.auth.api.docs;
 
 import com.github.giwoong01.springapicommon.template.RspTemplate;
 import com.leafup.leafupbackend.auth.api.dto.request.RefreshTokenReqDto;
