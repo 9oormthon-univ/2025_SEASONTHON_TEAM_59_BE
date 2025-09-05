@@ -4,6 +4,7 @@ import com.leafup.leafupbackend.global.entity.BaseEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -43,6 +44,10 @@ public class Member extends BaseEntity {
 
     private int currentStage;
 
+    private int streak;
+
+    private LocalDate lastStreakUpdatedAt;
+
     @Builder
     private Member(String email, String name, String picture, SocialType socialType) {
         this.email = email;
@@ -54,6 +59,8 @@ public class Member extends BaseEntity {
         this.exp = 0;
         this.point = 0;
         this.currentStage = 1;
+        this.streak = 0;
+        this.lastStreakUpdatedAt = null;
     }
 
     public void updateFirstLogin() {
@@ -100,6 +107,18 @@ public class Member extends BaseEntity {
         }
 
         this.point -= point;
+    }
+
+    public void incrementStreak() {
+        this.streak++;
+    }
+
+    public void resetStreakToOne() {
+        this.streak = 1;
+    }
+
+    public void updateLastStreakUpdatedAt(LocalDate date) {
+        this.lastStreakUpdatedAt = date;
     }
 
 }

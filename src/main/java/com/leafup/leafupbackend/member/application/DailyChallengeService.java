@@ -15,7 +15,6 @@ import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
 import com.leafup.leafupbackend.member.exception.ChallengeOwnershipException;
 import com.leafup.leafupbackend.member.exception.DailyMemberChallengeNotFoundException;
 import com.leafup.leafupbackend.member.exception.MemberNotFoundException;
-import com.leafup.leafupbackend.member.util.LevelUtil;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +36,7 @@ public class DailyChallengeService {
     private final ChallengeRepository challengeRepository;
     private final DailyMemberChallengeRepository dailyMemberChallengeRepository;
     private final DailyMemberChallengeImageRepository dailyMemberChallengeImageRepository;
+    private final LevelService levelService;
 
     private static final Set<ChallengeStatus> EXCLUDED_STATUSES_FOR_ADVANCED = Set.of(
             ChallengeStatus.PENDING_APPROVAL,
@@ -108,10 +108,32 @@ public class DailyChallengeService {
         dailyMemberChallengeImageRepository.save(dailyMemberChallengeImage);
 
         // 챌린지 타입에 맞는 포인트를 사용자에게 추가와 LevelUp, exp 업데이트, 스테이지 + 1 (도전가능 상태만 아니면 상승)
-        LevelUtil.addPointAndHandleLevelUpAndExp(member, dailyMemberChallenge.getChallenge().getChallengeType().getPoint());
+        levelService.addPointAndHandleLevelUpAndExp(member,
+                dailyMemberChallenge.getChallenge().getChallengeType().getPoint(),
+                "데일리 챌린지 인증");
         member.plusStage();
 
+        // 스트릭 업데이트
+        updateStreak(member);
+
         replaceHardChallengeIfCompleted(dailyMemberChallenge);
+    }
+
+    private void updateStreak(Member member) {
+        LocalDate today = LocalDate.now();
+        LocalDate lastUpdate = member.getLastStreakUpdatedAt();
+
+        if (lastUpdate == null) { // 첫 활동
+            member.resetStreakToOne();
+        } else if (lastUpdate.isEqual(today.minusDays(1))) { // 연속 활동
+            member.incrementStreak();
+        } else if (lastUpdate.isBefore(today.minusDays(1))) { // 연속 끊김
+            member.resetStreakToOne();
+        } else { // 같은 날 재활동
+            return; // 아무것도 하지 않음
+        }
+
+        member.updateLastStreakUpdatedAt(today);
     }
 
     private void replaceHardChallengeIfCompleted(DailyMemberChallenge completedChallenge) {
