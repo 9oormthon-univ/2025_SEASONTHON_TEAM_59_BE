@@ -1,33 +1,40 @@
-package com.leafup.leafupbackend.member.util;
+package com.leafup.leafupbackend.member.application;
 
 import com.leafup.leafupbackend.member.domain.Member;
+import com.leafup.leafupbackend.point.application.PointService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
-public class LevelUtil {
+@Component
+@RequiredArgsConstructor
+public class LevelService {
+
+    private final PointService pointService;
 
     // 포인트 추가 및 레벨업 처리
-    public static void addPointAndHandleLevelUpAndExp(Member member, int point) {
-        member.plusPoint(point);
+    public void addPointAndHandleLevelUpAndExp(Member member, int point, String description) {
+        pointService.addPoint(member.getEmail(), point, description);
 
         while (member.getPoint() >= getTotalXpForLevel(member.getLevel() + 1)) {
             member.updateLevel(member.getLevel() + 1);
         }
 
-        member.updateExp(LevelUtil.getExpBarPercent(member));
+        member.updateExp(getExpBarPercent(member));
     }
 
     // 포인트 및 레벨 차감
-    public static void subtractPointAndHandleLevelAndExpDown(Member member, int point) {
-        member.minusPoint(point);
+    public void subtractPointAndHandleLevelAndExpDown(Member member, int point, String description) {
+        pointService.minusPoint(member.getEmail(), point, description);
 
         while (member.getLevel() > 1 && member.getPoint() < getTotalXpForLevel(member.getLevel())) {
             member.updateLevel(member.getLevel() - 1);
         }
 
-        member.updateExp(LevelUtil.getExpBarPercent(member));
+        member.updateExp(getExpBarPercent(member));
     }
 
     // 경험치 바 퍼센트 계산
-    private static int getExpBarPercent(Member member) {
+    private int getExpBarPercent(Member member) {
         int level = member.getLevel();
         int currentXp = member.getPoint();
         int startXp = getTotalXpForLevel(level);
@@ -44,7 +51,7 @@ public class LevelUtil {
     }
 
     // 현재 레벨에서 다음 레벨까지 필요한 XP 반환
-    private static int getXpToNextLevel(int currentLevel) {
+    private int getXpToNextLevel(int currentLevel) {
         if (currentLevel == 1) {
             return 10;
         }
@@ -53,7 +60,7 @@ public class LevelUtil {
     }
 
     // 누적 XP: 해당 레벨에 도달하기까지 필요한 총 XP
-    private static int getTotalXpForLevel(int level) {
+    private int getTotalXpForLevel(int level) {
         int xp = 0;
         for (int i = 1; i < level; i++) {
             xp += getXpToNextLevel(i);

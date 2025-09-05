@@ -39,13 +39,7 @@ public class DailyChallengeController implements DailyChallengeControllerDocs {
             @AuthenticatedEmail String email,
             @PathVariable("dailyMemberChallengeId") Long dailyMemberChallengeId,
             @Valid @RequestBody SubmitChallengeReqDto submitChallengeReqDto) {
-
-        dailyChallengeService.submitChallenge(
-                email,
-                dailyMemberChallengeId,
-                submitChallengeReqDto.imageUrl()
-        );
-
+        dailyChallengeService.submitChallenge(email, dailyMemberChallengeId, submitChallengeReqDto.imageUrl());
         return RspTemplate.<Void>builder()
                 .statusCode(HttpStatus.OK)
                 .message("챌린지 인증 요청 성공")
