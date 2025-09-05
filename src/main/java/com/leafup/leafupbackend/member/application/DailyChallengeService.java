@@ -15,6 +15,7 @@ import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
 import com.leafup.leafupbackend.member.exception.ChallengeOwnershipException;
 import com.leafup.leafupbackend.member.exception.DailyMemberChallengeNotFoundException;
 import com.leafup.leafupbackend.member.exception.MemberNotFoundException;
+import com.leafup.leafupbackend.member.util.LevelUtil;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -106,8 +107,8 @@ public class DailyChallengeService {
 
         dailyMemberChallengeImageRepository.save(dailyMemberChallengeImage);
 
-        // 챌린지 타입에 맞는 포인트를 사용자에게 추가, 스테이지 + 1 (도전가능 상태만 아니면 상승)
-        member.plusPoint(dailyMemberChallenge.getChallenge().getChallengeType().getPoint());
+        // 챌린지 타입에 맞는 포인트를 사용자에게 추가와 LevelUp, exp 업데이트, 스테이지 + 1 (도전가능 상태만 아니면 상승)
+        LevelUtil.addPointAndHandleLevelUpAndExp(member, dailyMemberChallenge.getChallenge().getChallengeType().getPoint());
         member.plusStage();
 
         replaceHardChallengeIfCompleted(dailyMemberChallenge);

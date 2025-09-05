@@ -18,6 +18,22 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
 
+    public MemberInfoResDto getInfo(String email) {
+        Member member = memberRepository.findByEmail(email).orElseThrow(MemberNotFoundException::new);
+
+        return MemberInfoResDto.of(member.getEmail(),
+                member.getPicture(),
+                String.valueOf(member.getSocialType()),
+                member.isFirstLogin(),
+                member.getNickname(),
+                member.getCode(),
+                member.isLocationAgreed(),
+                member.isCameraAccessAllowed(),
+                member.getLevel(),
+                member.getExp(),
+                member.getPoint());
+    }
+
     @Transactional
     public MemberInfoResDto onboarding(String email, OnboardingReqDto onboardingReqDto) {
         Member member = memberRepository.findByEmail(email).orElseThrow(MemberNotFoundException::new);
@@ -42,7 +58,10 @@ public class MemberService {
                 member.getNickname(),
                 member.getCode(),
                 member.isLocationAgreed(),
-                member.isCameraAccessAllowed());
+                member.isCameraAccessAllowed(),
+                member.getLevel(),
+                member.getExp(),
+                member.getPoint());
     }
 
     private String randomAlphaNumeric(int length) {

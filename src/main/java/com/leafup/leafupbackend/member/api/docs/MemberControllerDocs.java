@@ -13,6 +13,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 public interface MemberControllerDocs {
 
+    @Operation(summary = "사용자 정보 조회", description = "사용자 정보를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "사용자 정보 조회 성공")
+    })
+    ResponseEntity<RspTemplate<MemberInfoResDto>> getInfo(@AuthenticatedEmail String email);
+
     @Operation(summary = "온보딩", description = "첫 로그인 후 온보딩합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "온보딩 성공")
