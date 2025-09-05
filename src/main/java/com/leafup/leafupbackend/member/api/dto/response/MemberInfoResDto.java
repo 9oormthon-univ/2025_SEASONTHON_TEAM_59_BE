@@ -10,11 +10,15 @@ public record MemberInfoResDto(
         boolean isFirstLogin,
         String nickname,
         boolean isLocationAgreed,
-        boolean isCameraAccessAllowed
+        boolean isCameraAccessAllowed,
+        int level,
+        int exp,
+        int point
 ) {
     public static MemberInfoResDto of(String email, String picture, String socialType,
                                       boolean isFirstLogin, String nickname, String code,
-                                      boolean isLocationAgreed, boolean isCameraAccessAllowed) {
+                                      boolean isLocationAgreed, boolean isCameraAccessAllowed,
+                                      int level, int exp, int point) {
         return MemberInfoResDto.builder()
                 .email(email)
                 .picture(picture)
@@ -23,6 +27,9 @@ public record MemberInfoResDto(
                 .nickname(nickname + "#" + code)
                 .isLocationAgreed(isLocationAgreed)
                 .isCameraAccessAllowed(isCameraAccessAllowed)
+                .level(level)
+                .exp(exp)
+                .point(point)
                 .build();
     }
 }

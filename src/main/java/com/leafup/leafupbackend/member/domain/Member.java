@@ -35,6 +35,10 @@ public class Member extends BaseEntity {
 
     private String address;
 
+    private int level;
+
+    private int exp;
+
     private int point;
 
     private int currentStage;
@@ -46,6 +50,8 @@ public class Member extends BaseEntity {
         this.picture = picture;
         this.socialType = socialType;
         this.isFirstLogin = true;
+        this.level = 1;
+        this.exp = 0;
         this.point = 0;
         this.currentStage = 1;
     }
@@ -75,12 +81,20 @@ public class Member extends BaseEntity {
         this.currentStage = currentStage;
     }
 
+    public void updateLevel(int level) {
+        this.level = level;
+    }
+
+    public void updateExp(int exp) {
+        this.exp = exp;
+    }
+
     public void plusPoint(int point) {
         this.point += point;
     }
 
     public void minusPoint(int point) {
-        if (point <= 0) {
+        if (this.point < point) {
             // 불가능.
             return;
         }

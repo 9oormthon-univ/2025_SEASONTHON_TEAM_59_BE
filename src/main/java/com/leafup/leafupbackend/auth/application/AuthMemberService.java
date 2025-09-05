@@ -31,7 +31,10 @@ public class AuthMemberService {
                 member.getNickname(),
                 member.getCode(),
                 member.isLocationAgreed(),
-                member.isCameraAccessAllowed());
+                member.isCameraAccessAllowed(),
+                member.getLevel(),
+                member.getExp(),
+                member.getPoint());
     }
 
     private Member getExistingMemberOrCreateNew(UserInfo userInfo, SocialType provider) {
