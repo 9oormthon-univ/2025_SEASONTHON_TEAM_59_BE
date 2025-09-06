@@ -106,11 +106,6 @@ public class DailyChallengeService {
                 .build();
 
         dailyMemberChallengeImageRepository.save(dailyMemberChallengeImage);
-
-        // 챌린지 타입에 맞는 포인트를 사용자에게 추가와 LevelUp, exp 업데이트, 스테이지 + 1 (도전가능 상태만 아니면 상승)
-        levelService.addPointAndHandleLevelUpAndExp(member,
-                dailyMemberChallenge.getChallenge().getChallengeType().getPoint(),
-                "데일리 챌린지 인증");
         member.plusStage();
 
         // 스트릭 업데이트

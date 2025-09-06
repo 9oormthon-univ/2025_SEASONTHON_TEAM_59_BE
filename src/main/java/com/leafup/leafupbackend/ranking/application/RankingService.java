@@ -11,6 +11,9 @@ import com.leafup.leafupbackend.ranking.domain.repository.MonthlyRankingReposito
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,32 +28,12 @@ public class RankingService {
 
     public RankingsResDto getTotalRanking() {
         List<Member> members = memberRepository.findTop100ByOrderByPointDesc();
-
-        AtomicInteger rank = new AtomicInteger(1);
-        List<RankingResDto> rankings = members.stream()
-                .map(member -> RankingResDto.of(
-                        rank.getAndIncrement(),
-                        member.getNickname(),
-                        member.getPicture(),
-                        member.getPoint()))
-                .toList();
-
-        return RankingsResDto.of(rankings);
+        return createRankingsFrom(members, member -> (long) member.getPoint());
     }
 
     public RankingsResDto getStreakRanking() {
         List<Member> members = memberRepository.findTop100ByOrderByStreakDesc();
-
-        AtomicInteger rank = new AtomicInteger(1);
-        List<RankingResDto> rankings = members.stream()
-                .map(member -> RankingResDto.of(
-                        rank.getAndIncrement(),
-                        member.getNickname(),
-                        member.getPicture(),
-                        member.getStreak()))
-                .toList();
-
-        return RankingsResDto.of(rankings);
+        return createRankingsFrom(members, member -> (long) member.getStreak());
     }
 
     public RankingsResDto getMonthlyRegionalRanking(String email, int year, int month) {
@@ -73,27 +56,11 @@ public class RankingService {
     }
 
     public MyRankingResDto getMyTotalRanking(String email) {
-        Member member = memberRepository.findByEmail(email).orElseThrow(MemberNotFoundException::new);
-
-        long higherRankCount = memberRepository.countByPointGreaterThan(member.getPoint());
-        long myRank = higherRankCount + 1;
-
-        return MyRankingResDto.of(myRank,
-                member.getNickname(),
-                member.getPicture(),
-                member.getPoint());
+        return getMyRanking(email, Member::getPoint, memberRepository::countByPointGreaterThan);
     }
 
     public MyRankingResDto getMyStreakRanking(String email) {
-        Member member = memberRepository.findByEmail(email).orElseThrow(MemberNotFoundException::new);
-
-        long higherRankCount = memberRepository.countByStreakGreaterThan(member.getStreak());
-        long myRank = higherRankCount + 1;
-
-        return MyRankingResDto.of(myRank,
-                member.getNickname(),
-                member.getPicture(),
-                member.getStreak());
+        return getMyRanking(email, Member::getStreak, memberRepository::countByStreakGreaterThan);
     }
 
     public MyRankingResDto getMyMonthlyRegionalRanking(String email, int year, int month) {
@@ -103,7 +70,6 @@ public class RankingService {
         Optional<MonthlyRanking> myMonthlyRankingOpt = monthlyRankingRepository
                 .findByYearAndMonthAndRegionAndMember(year, month, region, member);
 
-        // 해당 월에 랭킹 기록이 없는 경우
         if (myMonthlyRankingOpt.isEmpty()) {
             return MyRankingResDto.of(0, member.getNickname(), member.getPicture(), 0);
         }
@@ -114,6 +80,28 @@ public class RankingService {
         long myRank = higherRankCount + 1;
 
         return MyRankingResDto.of(myRank, member.getNickname(), member.getPicture(), myMonthlyRanking.getPoint());
+    }
+
+    private RankingsResDto createRankingsFrom(List<Member> members, Function<Member, Long> scoreExtractor) {
+        AtomicInteger rank = new AtomicInteger(1);
+        List<RankingResDto> rankings = members.stream()
+                .map(member -> RankingResDto.of(
+                        rank.getAndIncrement(),
+                        member.getNickname(),
+                        member.getPicture(),
+                        scoreExtractor.apply(member)
+                ))
+                .toList();
+        return RankingsResDto.of(rankings);
+    }
+
+    private MyRankingResDto getMyRanking(String email, ToIntFunction<Member> scoreExtractor,
+                                         ToLongFunction<Integer> rankCounter) {
+        Member member = memberRepository.findByEmail(email).orElseThrow(MemberNotFoundException::new);
+        int score = scoreExtractor.applyAsInt(member);
+        long higherRankCount = rankCounter.applyAsLong(score);
+        long myRank = higherRankCount + 1;
+        return MyRankingResDto.of(myRank, member.getNickname(), member.getPicture(), score);
     }
 
 }

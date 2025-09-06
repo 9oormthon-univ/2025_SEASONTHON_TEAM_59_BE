@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>리프업 챌린지 관리</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<h1>리프업 챌린지 관리</h1>
+
+<!-- 토큰 인증 UI가 표시될 영역 -->
+<div id="auth-container">
+    <h2>관리자 인증</h2>
+    <p>애플리케이션에서 발급받은 Access Token을 입력해주세요.</p>
+    <input type="text" id="token-input" placeholder="Access Token 입력">
+    <button id="auth-button">인증하기</button>
+</div>
+
+<!-- 챌린지 목록이 표시될 영역 (인증 후 표시) -->
+<div id="challenge-container" class="hidden">
+    <h2>승인 대기 중인 챌린지</h2>
+    <div id="challenge-list-container"></div>
+</div>
+
+<script src="admin.js"></script>
+
+</body>
+</html>
