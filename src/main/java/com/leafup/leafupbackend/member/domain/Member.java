@@ -1,6 +1,7 @@
 package com.leafup.leafupbackend.member.domain;
 
 import com.leafup.leafupbackend.global.entity.BaseEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -15,6 +16,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends BaseEntity {
 
+    @Column(unique = true, nullable = false)
     private String email;
 
     private String name;
@@ -25,7 +27,7 @@ public class Member extends BaseEntity {
     private SocialType socialType;
 
     @Enumerated(value = EnumType.STRING)
-    private Role role; // 역할 필드 추가
+    private Role role;
 
     private boolean isFirstLogin;
 
