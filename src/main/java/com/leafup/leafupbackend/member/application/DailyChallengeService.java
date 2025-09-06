@@ -47,15 +47,10 @@ public class DailyChallengeService {
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
 
-    private static final Set<ChallengeStatus> EXCLUDED_STATUSES_FOR_ADVANCED = Set.of(
-            ChallengeStatus.PENDING_APPROVAL,
-            ChallengeStatus.COMPLETED,
-            ChallengeStatus.REJECTED
-    );
-
     @Transactional
     public DailyChallengesResDto getOrCreateTodaysChallenges(String email) {
-        String cacheKey = "daily-challenges:" + email + ":" + LocalDate.now();
+        Member member = findMemberByEmail(email);
+        String cacheKey = "daily-challenges:" + email + ":" + LocalDate.now() + ":" + member.getCurrentStage();
 
         String cachedData = redisTemplate.opsForValue().get(cacheKey);
         if (cachedData != null) {
@@ -66,7 +61,7 @@ public class DailyChallengeService {
             }
         }
 
-        DailyChallengesResDto todaysChallengesDto = getChallengesFromDb(email);
+        DailyChallengesResDto todaysChallengesDto = getChallengesFromDb(member);
 
         try {
             String jsonData = objectMapper.writeValueAsString(todaysChallengesDto);
@@ -79,33 +74,29 @@ public class DailyChallengeService {
         return todaysChallengesDto;
     }
 
-    private DailyChallengesResDto getChallengesFromDb(String email) {
-        Member member = findMemberByEmail(email);
+    private DailyChallengesResDto getChallengesFromDb(Member member) {
         LocalDate today = LocalDate.now();
+        updateStageBasedOnSubmissionOrder(member);
 
-        List<DailyMemberChallenge> todaysChallenges = dailyMemberChallengeRepository.findByMemberAndChallengeDate(member, today);
-        if (todaysChallenges.isEmpty()) {
-            updateStageBasedOnSubmissionOrder(member);
-            todaysChallenges = createNewDailyChallenges(member, today);
+        List<DailyMemberChallenge> activeChallenges = dailyMemberChallengeRepository.findByMemberAndChallengeDateAndChallengeStatus(
+            member, today, ChallengeStatus.ACTIVE);
+
+        if (activeChallenges.isEmpty()) {
+            activeChallenges = createNewDailyChallenges(member, today);
         }
 
-        List<DailyChallengeResDto> filteredChallenges = todaysChallenges.stream()
-                .filter(dmc -> {
-                    boolean isAdvanced = dmc.getChallenge().getChallengeType() == ChallengeType.HARD;
-                    boolean isExcludedStatus = EXCLUDED_STATUSES_FOR_ADVANCED.contains(dmc.getChallengeStatus());
+        List<DailyChallengeResDto> challengeDtos = activeChallenges.stream()
+            .map(dmc -> DailyChallengeResDto.of(dmc.getId(),
+                dmc.getChallenge().getContents(),
+                dmc.getChallenge().getChallengeType(),
+                dmc.getChallengeStatus()))
+            .toList();
 
-                    return !(isAdvanced && isExcludedStatus);
-                })
-                .map(dmc -> DailyChallengeResDto.of(dmc.getId(),
-                        dmc.getChallenge().getContents(),
-                        dmc.getChallenge().getChallengeType(),
-                        dmc.getChallengeStatus()))
-                .toList();
+        int completedCount = (int) dailyMemberChallengeRepository.findByMemberAndChallengeDate(member, today).stream()
+            .filter(c -> c.getChallengeStatus() == ChallengeStatus.COMPLETED)
+            .count();
 
-        int completedCount = dailyMemberChallengeRepository
-                .countByMemberAndChallengeDateAndChallengeStatus(member, today, ChallengeStatus.COMPLETED);
-
-        return DailyChallengesResDto.of(member.getCurrentStage(), completedCount, filteredChallenges);
+        return DailyChallengesResDto.of(member.getCurrentStage(), completedCount, challengeDtos);
     }
 
     @Transactional
@@ -117,24 +108,35 @@ public class DailyChallengeService {
             throw new ChallengeOwnershipException();
         }
 
+        deleteDailyChallengeCache(email, LocalDate.now(), member.getCurrentStage());
+
         dailyMemberChallenge.updateChallengeStatus(ChallengeStatus.PENDING_APPROVAL);
         DailyMemberChallengeImage dailyMemberChallengeImage = DailyMemberChallengeImage.builder()
-                .dailyMemberChallenge(dailyMemberChallenge)
-                .imageUrl(imageUrl)
-                .build();
-
+            .dailyMemberChallenge(dailyMemberChallenge)
+            .imageUrl(imageUrl)
+            .build();
         dailyMemberChallengeImageRepository.save(dailyMemberChallengeImage);
+
+        expireOtherActiveChallenges(member, LocalDate.now(), dailyMemberChallengeId);
 
         member.plusStage();
         updateStreak(member);
-        replaceHardChallengeIfCompleted(dailyMemberChallenge);
 
-        // 캐시 무효화
-        deleteDailyChallengeCache(email, LocalDate.now());
+        deleteDailyChallengeCache(email, LocalDate.now(), member.getCurrentStage());
     }
 
-    public void deleteDailyChallengeCache(String email, LocalDate date) {
-        String cacheKey = "daily-challenges:" + email + ":" + date;
+    private void expireOtherActiveChallenges(Member member, LocalDate date, Long completedChallengeId) {
+        List<DailyMemberChallenge> activeChallenges = dailyMemberChallengeRepository.findByMemberAndChallengeDateAndChallengeStatus(
+            member, date, ChallengeStatus.ACTIVE);
+        for (DailyMemberChallenge challenge : activeChallenges) {
+            if (!challenge.getId().equals(completedChallengeId)) {
+                challenge.updateChallengeStatus(ChallengeStatus.EXPIRED);
+            }
+        }
+    }
+
+    public void deleteDailyChallengeCache(String email, LocalDate date, int stage) {
+        String cacheKey = "daily-challenges:" + email + ":" + date + ":" + stage;
         redisTemplate.delete(cacheKey);
     }
 
@@ -153,43 +155,16 @@ public class DailyChallengeService {
         member.updateLastStreakUpdatedAt(today);
     }
 
-    private void replaceHardChallengeIfCompleted(DailyMemberChallenge completedChallenge) {
-        if (completedChallenge.getChallenge().getChallengeType() != ChallengeType.HARD) {
-            return;
-        }
-
-        Member member = completedChallenge.getMember();
-        LocalDate today = completedChallenge.getChallengeDate();
-
-        Set<Long> todaysChallengeIds = dailyMemberChallengeRepository.findByMemberAndChallengeDate(member, today).stream()
-                .map(dmc -> dmc.getChallenge().getId())
-                .collect(Collectors.toSet());
-
-        Challenge newMediumChallenge = challengeRepository.findAll().stream()
-                .filter(c -> c.getChallengeType() == ChallengeType.MEDIUM && !todaysChallengeIds.contains(c.getId()))
-                .findAny()
-                .orElse(null);
-
-        if (newMediumChallenge != null) {
-            DailyMemberChallenge newDmc = DailyMemberChallenge.builder()
-                    .member(member)
-                    .challenge(newMediumChallenge)
-                    .challengeDate(today)
-                    .build();
-            dailyMemberChallengeRepository.save(newDmc);
-        }
-    }
-
     private void updateStageBasedOnSubmissionOrder(Member member) {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         List<DailyMemberChallenge> yesterdaysDmcs = dailyMemberChallengeRepository.findByMemberAndChallengeDate(member,
-                yesterday);
+            yesterday);
         if (yesterdaysDmcs.isEmpty()) {
             return;
         }
 
         List<DailyMemberChallengeImage> yesterdaysImages = dailyMemberChallengeImageRepository.findByDailyMemberChallengeIn(
-                yesterdaysDmcs);
+            yesterdaysDmcs);
         if (yesterdaysImages.isEmpty()) {
             return;
         }
@@ -209,37 +184,39 @@ public class DailyChallengeService {
     }
 
     private List<DailyMemberChallenge> createNewDailyChallenges(Member member, LocalDate today) {
-        LocalDate yesterday = today.minusDays(1);
         Set<Long> challengesToExclude = dailyMemberChallengeRepository.findChallengeIdsByMemberAndChallengeDate(member,
-                yesterday);
+            today);
 
-        List<Challenge> availableChallengesSource = challengesToExclude.isEmpty() ?
-                challengeRepository.findAll() :
-                challengeRepository.findChallengesToSelect(challengesToExclude);
+        List<Challenge> availableChallengesSource = challengeRepository.findAll();
 
         Map<ChallengeType, List<Challenge>> availableChallenges = availableChallengesSource.stream()
-                .filter(c -> !challengesToExclude.contains(c.getId()))
-                .collect(Collectors.groupingBy(Challenge::getChallengeType));
+            .filter(c -> !challengesToExclude.contains(c.getId()))
+            .collect(Collectors.groupingBy(Challenge::getChallengeType));
 
         List<Challenge> selected = new ArrayList<>();
-        selected.addAll(selectRandomChallenges(availableChallenges.getOrDefault(ChallengeType.EASY, Collections.emptyList()), 2));
         selected.addAll(
-                selectRandomChallenges(availableChallenges.getOrDefault(ChallengeType.MEDIUM, Collections.emptyList()), 2));
-        selected.addAll(selectRandomChallenges(availableChallenges.getOrDefault(ChallengeType.HARD, Collections.emptyList()), 1));
+            selectRandomChallenges(availableChallenges.getOrDefault(ChallengeType.EASY, Collections.emptyList()), 2));
+        selected.addAll(
+            selectRandomChallenges(availableChallenges.getOrDefault(ChallengeType.MEDIUM, Collections.emptyList()),
+                2));
+        selected.addAll(
+            selectRandomChallenges(availableChallenges.getOrDefault(ChallengeType.HARD, Collections.emptyList()), 1));
 
         List<DailyMemberChallenge> newChallenges = selected.stream()
-                .map(challenge -> DailyMemberChallenge.builder()
-                        .member(member)
-                        .challenge(challenge)
-                        .challengeDate(today)
-                        .build())
-                .collect(Collectors.toList());
+            .map(challenge -> DailyMemberChallenge.builder()
+                .member(member)
+                .challenge(challenge)
+                .challengeDate(today)
+                .build())
+            .collect(Collectors.toList());
 
         return dailyMemberChallengeRepository.saveAll(newChallenges);
     }
 
     private List<Challenge> selectRandomChallenges(List<Challenge> challenges, int count) {
         if (challenges.size() < count) {
+            log.warn("Not enough challenges of a certain type to select. available: {}, requested: {}",
+                challenges.size(), count);
             return challenges;
         }
         Collections.shuffle(challenges);
