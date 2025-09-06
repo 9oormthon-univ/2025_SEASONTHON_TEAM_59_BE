@@ -50,6 +50,10 @@ public class AdminService {
         Member member = dmc.getMember();
         LocalDate challengeDate = dmc.getChallengeDate();
 
+        levelService.addPointAndHandleLevelUpAndExp(member,
+                dmc.getChallenge().getChallengeType().getPoint(),
+                "데일리 챌린지 승인");
+
         int completedCount = dailyMemberChallengeRepository
                 .countByMemberAndChallengeDateAndChallengeStatus(member, challengeDate, ChallengeStatus.COMPLETED);
 
