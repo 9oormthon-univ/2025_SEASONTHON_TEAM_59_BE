@@ -2,6 +2,7 @@ package com.leafup.leafupbackend.admin.application;
 
 import com.leafup.leafupbackend.admin.api.dto.response.PendingChallengeResDto;
 import com.leafup.leafupbackend.admin.api.dto.response.PendingChallengesResDto;
+import com.leafup.leafupbackend.garden.application.WeeklyGardenService;
 import com.leafup.leafupbackend.member.application.LevelService;
 import com.leafup.leafupbackend.member.domain.ChallengeStatus;
 import com.leafup.leafupbackend.member.domain.DailyMemberChallenge;
@@ -24,6 +25,7 @@ public class AdminService {
     private final DailyMemberChallengeRepository dailyMemberChallengeRepository;
     private final DailyMemberChallengeImageRepository dailyMemberChallengeImageRepository;
     private final LevelService levelService;
+    private final WeeklyGardenService weeklyGardenService;
 
     public PendingChallengesResDto getPendingChallenges() {
         List<PendingChallengeResDto> pendingChallenges = dailyMemberChallengeImageRepository
@@ -53,6 +55,8 @@ public class AdminService {
         levelService.addPointAndHandleLevelUpAndExp(member,
                 dmc.getChallenge().getChallengeType().getPoint(),
                 "데일리 챌린지 승인");
+
+        weeklyGardenService.recordChallengeCompletion(member, dmc.getChallenge());
 
         int completedCount = dailyMemberChallengeRepository
                 .countByMemberAndChallengeDateAndChallengeStatus(member, challengeDate, ChallengeStatus.COMPLETED);
