@@ -2,6 +2,8 @@ package com.leafup.leafupbackend.admin.application;
 
 import com.leafup.leafupbackend.admin.api.dto.response.PendingChallengeResDto;
 import com.leafup.leafupbackend.admin.api.dto.response.PendingChallengesResDto;
+import com.leafup.leafupbackend.garden.application.WeeklyGardenService;
+import com.leafup.leafupbackend.member.application.DailyChallengeService;
 import com.leafup.leafupbackend.member.application.LevelService;
 import com.leafup.leafupbackend.member.domain.ChallengeStatus;
 import com.leafup.leafupbackend.member.domain.DailyMemberChallenge;
@@ -24,15 +26,18 @@ public class AdminService {
     private final DailyMemberChallengeRepository dailyMemberChallengeRepository;
     private final DailyMemberChallengeImageRepository dailyMemberChallengeImageRepository;
     private final LevelService levelService;
+    private final DailyChallengeService dailyChallengeService;
+    private final WeeklyGardenService weeklyGardenService;
 
     public PendingChallengesResDto getPendingChallenges() {
         List<PendingChallengeResDto> pendingChallenges = dailyMemberChallengeImageRepository
-                .findByDailyMemberChallenge_ChallengeStatus(ChallengeStatus.PENDING_APPROVAL).stream()
+                .findPendingChallengesWithDetails(ChallengeStatus.PENDING_APPROVAL).stream()
                 .map(image -> {
                     DailyMemberChallenge dmc = image.getDailyMemberChallenge();
                     return PendingChallengeResDto.of(
                             dmc.getId(),
                             dmc.getMember().getNickname(),
+                            dmc.getMember().getCode(),
                             dmc.getChallenge().getContents(),
                             image.getImageUrl()
                     );
@@ -42,6 +47,7 @@ public class AdminService {
         return PendingChallengesResDto.of(pendingChallenges);
     }
 
+    // 챌린지 승인시 point, exp, level 상승, 캐시 무효화, 주간 텃밭 기록, 완료된 챌린지가 3개이면 추가 point 적립
     @Transactional
     public void approveChallenge(Long dailyMemberChallengeId) {
         DailyMemberChallenge dmc = findDailyChallengeById(dailyMemberChallengeId);
@@ -50,9 +56,9 @@ public class AdminService {
         Member member = dmc.getMember();
         LocalDate challengeDate = dmc.getChallengeDate();
 
-        levelService.addPointAndHandleLevelUpAndExp(member,
-                dmc.getChallenge().getChallengeType().getPoint(),
-                "데일리 챌린지 승인");
+        levelService.addPointAndHandleLevelUpAndExp(member, dmc.getChallenge().getChallengeType().getPoint(), "데일리 챌린지 승인");
+        dailyChallengeService.deleteDailyChallengeCache(member.getEmail(), challengeDate);
+        weeklyGardenService.recordChallengeCompletion(member, dmc.getChallenge());
 
         int completedCount = dailyMemberChallengeRepository
                 .countByMemberAndChallengeDateAndChallengeStatus(member, challengeDate, ChallengeStatus.COMPLETED);
@@ -67,8 +73,7 @@ public class AdminService {
         DailyMemberChallenge dmc = findDailyChallengeById(dailyMemberChallengeId);
         dmc.updateChallengeStatus(ChallengeStatus.REJECTED);
 
-        levelService.subtractPointAndHandleLevelAndExpDown(dmc.getMember(), dmc.getChallenge().getChallengeType().getPoint(),
-                "챌린지 반려");
+        dailyChallengeService.deleteDailyChallengeCache(dmc.getMember().getEmail(), dmc.getChallengeDate());
     }
 
     private DailyMemberChallenge findDailyChallengeById(Long id) {
