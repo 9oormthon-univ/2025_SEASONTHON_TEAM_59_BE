@@ -94,6 +94,7 @@ const AdminPage = (() => {
                 item.className = 'challenge-item';
                 item.innerHTML = `
                     <div class="challenge-info">
+                        <p><strong>챌린지 아이디:</strong> ${c.dailyMemberChallengeId}</p>
                         <p><strong>유저:</strong> ${c.userNickname}</p>
                         <p><strong>챌린지:</strong> ${c.challengeContent}</p>
                     </div>
