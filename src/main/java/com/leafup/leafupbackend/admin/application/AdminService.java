@@ -47,7 +47,7 @@ public class AdminService {
         return PendingChallengesResDto.of(pendingChallenges);
     }
 
-    // 챌린지 승인시 point, exp, level 상승, 캐시 무효화, 주간 텃밭 기록, 완료된 챌린지가 3개이면 추가 point 정립
+    // 챌린지 승인시 point, exp, level 상승, 캐시 무효화, 주간 텃밭 기록, 완료된 챌린지가 3개이면 추가 point 적립
     @Transactional
     public void approveChallenge(Long dailyMemberChallengeId) {
         DailyMemberChallenge dmc = findDailyChallengeById(dailyMemberChallengeId);
@@ -73,7 +73,6 @@ public class AdminService {
         DailyMemberChallenge dmc = findDailyChallengeById(dailyMemberChallengeId);
         dmc.updateChallengeStatus(ChallengeStatus.REJECTED);
 
-        // 캐시 무효화
         dailyChallengeService.deleteDailyChallengeCache(dmc.getMember().getEmail(), dmc.getChallengeDate());
     }
 

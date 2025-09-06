@@ -32,16 +32,22 @@ public class WeeklyGarden extends BaseEntity {
     @CollectionTable(name = "weekly_garden_completed_challenges", joinColumns = @JoinColumn(name = "weekly_garden_id"))
     private Set<Long> completedChallengeIds = new HashSet<>();
 
+    private boolean bonusAwarded;
+
     @Builder
-    private WeeklyGarden(Member member, int year, int weekOfYear) {
+    public WeeklyGarden(Member member, int year, int weekOfYear) {
         this.member = member;
         this.year = year;
         this.weekOfYear = weekOfYear;
+        this.bonusAwarded = false;
     }
 
+    public boolean addCompletedChallenge(Long challengeId) {
+        return this.completedChallengeIds.add(challengeId);
+    }
 
-    public void addCompletedChallenge(Long challengeId) {
-        this.completedChallengeIds.add(challengeId);
+    public void markBonusAsAwarded() {
+        this.bonusAwarded = true;
     }
 
 }

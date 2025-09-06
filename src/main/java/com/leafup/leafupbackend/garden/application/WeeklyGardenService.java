@@ -6,6 +6,7 @@ import com.leafup.leafupbackend.garden.api.dto.response.CompletedChallengeDto;
 import com.leafup.leafupbackend.garden.api.dto.response.WeeklyGardenResDto;
 import com.leafup.leafupbackend.garden.domain.WeeklyGarden;
 import com.leafup.leafupbackend.garden.domain.repository.WeeklyGardenRepository;
+import com.leafup.leafupbackend.member.application.LevelService;
 import com.leafup.leafupbackend.member.domain.Member;
 import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
 import com.leafup.leafupbackend.member.exception.MemberNotFoundException;
@@ -16,7 +17,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +29,7 @@ public class WeeklyGardenService {
     private final WeeklyGardenRepository weeklyGardenRepository;
     private final MemberRepository memberRepository;
     private final ChallengeRepository challengeRepository;
+    private final LevelService levelService;
 
     @Transactional
     public void recordChallengeCompletion(Member member, Challenge challenge) {
@@ -43,10 +44,18 @@ public class WeeklyGardenService {
                             .year(year)
                             .weekOfYear(weekOfYear)
                             .build();
+
                     return weeklyGardenRepository.save(newGarden);
                 });
 
-        weeklyGarden.addCompletedChallenge(challenge.getId());
+        boolean isNewChallenge = weeklyGarden.addCompletedChallenge(challenge.getId());
+
+        if (isNewChallenge &&
+                weeklyGarden.getCompletedChallengeIds().size() == 9 &&
+                !weeklyGarden.isBonusAwarded()) {
+            levelService.addPointAndHandleLevelUpAndExp(member, 100, "주간 텃밭 9칸 완성 보너스");
+            weeklyGarden.markBonusAsAwarded();
+        }
     }
 
     public WeeklyGardenResDto getWeeklyGardenStatus(String email) {
@@ -65,12 +74,12 @@ public class WeeklyGardenService {
         WeeklyGarden weeklyGarden = weeklyGardenOpt.get();
         List<CompletedChallengeDto> completedChallenges = weeklyGarden.getCompletedChallengeIds().stream()
                 .map(challengeId -> challengeRepository.findById(challengeId)
-                        .map(challenge -> CompletedChallengeDto.of(challenge.getId(), challenge.getContents()))
+                        .map(c -> CompletedChallengeDto.of(c.getId(), c.getContents()))
                         .orElse(null))
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .toList();
 
         return WeeklyGardenResDto.of(year, weekOfYear, completedChallenges);
     }
-    
+
 }
