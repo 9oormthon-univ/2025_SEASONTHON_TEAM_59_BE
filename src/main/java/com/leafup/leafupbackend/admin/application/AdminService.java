@@ -5,9 +5,11 @@ import com.leafup.leafupbackend.admin.api.dto.response.PendingChallengesResDto;
 import com.leafup.leafupbackend.member.application.LevelService;
 import com.leafup.leafupbackend.member.domain.ChallengeStatus;
 import com.leafup.leafupbackend.member.domain.DailyMemberChallenge;
+import com.leafup.leafupbackend.member.domain.Member;
 import com.leafup.leafupbackend.member.domain.repository.DailyMemberChallengeImageRepository;
 import com.leafup.leafupbackend.member.domain.repository.DailyMemberChallengeRepository;
 import com.leafup.leafupbackend.member.exception.DailyMemberChallengeNotFoundException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -40,20 +42,29 @@ public class AdminService {
         return PendingChallengesResDto.of(pendingChallenges);
     }
 
-    // (관리자) 챌린지 승인
     @Transactional
     public void approveChallenge(Long dailyMemberChallengeId) {
         DailyMemberChallenge dmc = findDailyChallengeById(dailyMemberChallengeId);
         dmc.updateChallengeStatus(ChallengeStatus.COMPLETED);
+
+        Member member = dmc.getMember();
+        LocalDate challengeDate = dmc.getChallengeDate();
+
+        int completedCount = dailyMemberChallengeRepository
+                .countByMemberAndChallengeDateAndChallengeStatus(member, challengeDate, ChallengeStatus.COMPLETED);
+
+        if (completedCount == 3) {
+            levelService.addPointAndHandleLevelUpAndExp(member, 20, "일일 챌린지 3개 완료 보너스");
+        }
     }
 
-    // (관리자) 챌린지 반려
     @Transactional
     public void rejectChallenge(Long dailyMemberChallengeId) {
         DailyMemberChallenge dmc = findDailyChallengeById(dailyMemberChallengeId);
         dmc.updateChallengeStatus(ChallengeStatus.REJECTED);
 
-        levelService.subtractPointAndHandleLevelAndExpDown(dmc.getMember(), dmc.getChallenge().getChallengeType().getPoint(), "챌린지 반려");
+        levelService.subtractPointAndHandleLevelAndExpDown(dmc.getMember(), dmc.getChallenge().getChallengeType().getPoint(),
+                "챌린지 반려");
     }
 
     private DailyMemberChallenge findDailyChallengeById(Long id) {
