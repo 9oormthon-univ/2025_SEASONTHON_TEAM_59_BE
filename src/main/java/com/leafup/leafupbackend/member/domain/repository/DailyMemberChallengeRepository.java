@@ -14,9 +14,19 @@ public interface DailyMemberChallengeRepository extends JpaRepository<DailyMembe
 
     List<DailyMemberChallenge> findByMemberAndChallengeDate(Member member, LocalDate date);
 
+    List<DailyMemberChallenge> findByMemberAndChallengeDateAndChallengeStatus(Member member, LocalDate date, ChallengeStatus challengeStatus);
+
     @Query("SELECT dmc.challenge.id FROM DailyMemberChallenge dmc WHERE dmc.member = :member AND dmc.challengeDate = :date")
     Set<Long> findChallengeIdsByMemberAndChallengeDate(@Param("member") Member member, @Param("date") LocalDate date);
 
     int countByMemberAndChallengeDateAndChallengeStatus(Member member, LocalDate date, ChallengeStatus challengeStatus);
+
+    @Query("SELECT DISTINCT dmc.challenge.id FROM DailyMemberChallenge dmc WHERE dmc.member = :member AND dmc.challengeStatus = 'COMPLETED'")
+    Set<Long> findCompletedChallengeIdsByMember(@Param("member") Member member);
+
+    /**
+     * 특정 사용자의 특정 날짜에 해당하는 여러 챌린지 ID로 DailyMemberChallenge 목록을 조회합니다.
+     */
+    List<DailyMemberChallenge> findByMemberAndChallengeDateAndChallengeIdIn(Member member, LocalDate date, List<Long> challengeIds);
 
 }

@@ -57,7 +57,7 @@ public class AdminService {
         LocalDate challengeDate = dmc.getChallengeDate();
 
         levelService.addPointAndHandleLevelUpAndExp(member, dmc.getChallenge().getChallengeType().getPoint(), "데일리 챌린지 승인");
-        dailyChallengeService.deleteDailyChallengeCache(member.getEmail(), challengeDate);
+        dailyChallengeService.deleteDailyChallengeCache(member.getEmail(), challengeDate, dmc.getMember().getCurrentStage());
         weeklyGardenService.recordChallengeCompletion(member, dmc.getChallenge());
 
         int completedCount = dailyMemberChallengeRepository
@@ -73,7 +73,8 @@ public class AdminService {
         DailyMemberChallenge dmc = findDailyChallengeById(dailyMemberChallengeId);
         dmc.updateChallengeStatus(ChallengeStatus.REJECTED);
 
-        dailyChallengeService.deleteDailyChallengeCache(dmc.getMember().getEmail(), dmc.getChallengeDate());
+        dailyChallengeService.deleteDailyChallengeCache(dmc.getMember().getEmail(), dmc.getChallengeDate(),
+                dmc.getMember().getCurrentStage());
     }
 
     private DailyMemberChallenge findDailyChallengeById(Long id) {
