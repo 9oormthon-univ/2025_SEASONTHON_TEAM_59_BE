@@ -70,9 +70,6 @@ public class AdminService {
     public void rejectChallenge(Long dailyMemberChallengeId) {
         DailyMemberChallenge dmc = findDailyChallengeById(dailyMemberChallengeId);
         dmc.updateChallengeStatus(ChallengeStatus.REJECTED);
-
-        levelService.subtractPointAndHandleLevelAndExpDown(dmc.getMember(), dmc.getChallenge().getChallengeType().getPoint(),
-                "챌린지 반려");
     }
 
     private DailyMemberChallenge findDailyChallengeById(Long id) {
