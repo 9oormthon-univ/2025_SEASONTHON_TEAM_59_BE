@@ -26,7 +26,8 @@ public class TokenCheckFilter extends GenericFilterBean {
             "/api/v1/oauth2/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
-            "/h2-console/**"
+            "/h2-console/**",
+            "/admin/**" // 관리자 페이지 정적 리소스는 토큰 검사 제외
     );
 
     @Override

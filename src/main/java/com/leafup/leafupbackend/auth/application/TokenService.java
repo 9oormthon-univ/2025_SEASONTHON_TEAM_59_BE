@@ -10,6 +10,7 @@ import com.leafup.leafupbackend.member.api.dto.response.MemberInfoResDto;
 import com.leafup.leafupbackend.member.domain.Member;
 import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
 import com.leafup.leafupbackend.member.exception.MemberNotFoundException;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,44 +26,43 @@ public class TokenService {
 
     @Transactional
     public TokenDto getToken(MemberInfoResDto memberInfoResDto) {
-        TokenDto tokenDto = tokenProvider.generateToken(memberInfoResDto.email());
+        Member member = memberRepository.findByEmail(memberInfoResDto.email())
+                .orElseThrow(MemberNotFoundException::new);
 
-        tokenSaveAndUpdate(memberInfoResDto, tokenDto);
+        TokenDto tokenDto = tokenProvider.generateToken(member.getEmail(), member.getRole());
+
+        tokenSaveOrUpdate(member, tokenDto);
 
         return tokenDto;
     }
 
     @Transactional
     public TokenDto generateAccessToken(RefreshTokenReqDto refreshTokenReqDto) {
-        if (!tokenRepository.existsByRefreshToken(refreshTokenReqDto.refreshToken())
-                || !tokenProvider.isValidToken(refreshTokenReqDto.refreshToken())) {
+        if (!tokenProvider.isValidToken(refreshTokenReqDto.refreshToken())) {
             throw new InvalidTokenException();
         }
 
-        Token token = tokenRepository.findByRefreshToken(refreshTokenReqDto.refreshToken()).orElseThrow();
-        Member member = memberRepository.findById(token.getMember().getId()).orElseThrow(MemberNotFoundException::new);
+        Token token = tokenRepository.findByRefreshToken(refreshTokenReqDto.refreshToken())
+                .orElseThrow(InvalidTokenException::new);
 
-        return tokenProvider.generateAccessTokenByRefreshToken(member.getEmail(), token.getRefreshToken());
+        Member member = memberRepository.findById(token.getMember().getId())
+                .orElseThrow(MemberNotFoundException::new);
+
+        return tokenProvider.generateAccessTokenByRefreshToken(member.getEmail(), member.getRole(), token.getRefreshToken());
     }
 
-    private void tokenSaveAndUpdate(MemberInfoResDto memberInfoResDto, TokenDto tokenDto) {
-        Member member = memberRepository.findByEmail(memberInfoResDto.email()).orElseThrow(MemberNotFoundException::new);
+    private void tokenSaveOrUpdate(Member member, TokenDto tokenDto) {
+        Optional<Token> tokenOpt = tokenRepository.findByMember(member);
 
-        if (!tokenRepository.existsByMember(member)) {
+        if (tokenOpt.isPresent()) {
+            Token token = tokenOpt.get();
+            token.refreshTokenUpdate(tokenDto.refreshToken());
+        } else {
             tokenRepository.save(Token.builder()
                     .member(member)
                     .refreshToken(tokenDto.refreshToken())
                     .build());
         }
-
-        refreshTokenUpdate(memberInfoResDto, tokenDto);
-    }
-
-    private void refreshTokenUpdate(MemberInfoResDto memberInfoResDto, TokenDto tokenDto) {
-        Member member = memberRepository.findByEmail(memberInfoResDto.email()).orElseThrow(MemberNotFoundException::new);
-
-        Token token = tokenRepository.findByMember(member).orElseThrow();
-        token.refreshTokenUpdate(tokenDto.refreshToken());
     }
 
 }

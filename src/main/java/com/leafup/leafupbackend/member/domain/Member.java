@@ -24,6 +24,9 @@ public class Member extends BaseEntity {
     @Enumerated(value = EnumType.STRING)
     private SocialType socialType;
 
+    @Enumerated(value = EnumType.STRING)
+    private Role role; // 역할 필드 추가
+
     private boolean isFirstLogin;
 
     private String nickname;
@@ -54,6 +57,7 @@ public class Member extends BaseEntity {
         this.name = name;
         this.picture = picture;
         this.socialType = socialType;
+        this.role = Role.USER;
         this.isFirstLogin = true;
         this.level = 1;
         this.exp = 0;

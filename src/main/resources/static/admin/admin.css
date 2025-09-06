@@ -1,0 +1,99 @@
+body {
+    font-family: sans-serif;
+    margin: 20px;
+    background-color: #f4f4f4;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+#auth-container, #challenge-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#challenge-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.challenge-item {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+.challenge-info p {
+    margin: 5px 0;
+}
+
+.challenge-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    border: 1px solid #eee;
+}
+
+.challenge-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.challenge-actions button, #auth-button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    color: white;
+}
+
+#token-input {
+    width: calc(100% - 22px);
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#auth-button {
+    width: 100%;
+    background-color: #007bff;
+}
+
+#auth-button:hover {
+    background-color: #0056b3;
+}
+
+.approve-btn {
+    background-color: #28a745; /* 초록색 */
+}
+
+.approve-btn:hover {
+    background-color: #218838;
+}
+
+.reject-btn {
+    background-color: #dc3545; /* 빨간색 */
+}
+
+.reject-btn:hover {
+    background-color: #c82333;
+}
+
+.hidden {
+    display: none;
+}
