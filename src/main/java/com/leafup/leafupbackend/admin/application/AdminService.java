@@ -3,7 +3,7 @@ package com.leafup.leafupbackend.admin.application;
 import com.leafup.leafupbackend.admin.api.dto.response.PendingChallengeResDto;
 import com.leafup.leafupbackend.admin.api.dto.response.PendingChallengesResDto;
 import com.leafup.leafupbackend.garden.application.WeeklyGardenService;
-import com.leafup.leafupbackend.member.application.DailyChallengeService;
+import com.leafup.leafupbackend.global.cache.DailyChallengeCacheService;
 import com.leafup.leafupbackend.member.application.LevelService;
 import com.leafup.leafupbackend.member.domain.ChallengeStatus;
 import com.leafup.leafupbackend.member.domain.DailyMemberChallenge;
@@ -26,7 +26,7 @@ public class AdminService {
     private final DailyMemberChallengeRepository dailyMemberChallengeRepository;
     private final DailyMemberChallengeImageRepository dailyMemberChallengeImageRepository;
     private final LevelService levelService;
-    private final DailyChallengeService dailyChallengeService;
+    private final DailyChallengeCacheService dailyChallengeCacheService;
     private final WeeklyGardenService weeklyGardenService;
 
     public PendingChallengesResDto getPendingChallenges() {
@@ -57,7 +57,7 @@ public class AdminService {
         LocalDate challengeDate = dmc.getChallengeDate();
 
         levelService.addPointAndHandleLevelUpAndExp(member, dmc.getChallenge().getChallengeType().getPoint(), "데일리 챌린지 승인");
-        dailyChallengeService.deleteDailyChallengeCache(member.getEmail(), challengeDate, dmc.getMember().getCurrentStage());
+        dailyChallengeCacheService.deleteDailyChallengeCache(member.getEmail(), challengeDate, dmc.getMember().getCurrentStage());
         weeklyGardenService.recordChallengeCompletion(member, dmc.getChallenge());
 
         int completedCount = dailyMemberChallengeRepository
@@ -73,7 +73,7 @@ public class AdminService {
         DailyMemberChallenge dmc = findDailyChallengeById(dailyMemberChallengeId);
         dmc.updateChallengeStatus(ChallengeStatus.REJECTED);
 
-        dailyChallengeService.deleteDailyChallengeCache(dmc.getMember().getEmail(), dmc.getChallengeDate(),
+        dailyChallengeCacheService.deleteDailyChallengeCache(dmc.getMember().getEmail(), dmc.getChallengeDate(),
                 dmc.getMember().getCurrentStage());
     }
 
