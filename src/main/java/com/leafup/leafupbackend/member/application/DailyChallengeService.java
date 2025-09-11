@@ -83,6 +83,8 @@ public class DailyChallengeService {
 
             if (dailyMemberChallenge.getChallenge().getChallengeType() == ChallengeType.HARD) {
                 createBonusDailyChallenges(member, LocalDate.now());
+            } else {
+                createNewChallenges(member, LocalDate.now(), 2, 2, 0);
             }
         }
     }
@@ -107,36 +109,48 @@ public class DailyChallengeService {
     private DailyChallengesResDto getChallengesFromDb(Member member, LocalDate today) {
         updateStageBasedOnSubmissionOrder(member, today);
 
-        List<DailyMemberChallenge> activeChallenges = dailyMemberChallengeRepository
-                .findByMemberAndChallengeDateAndChallengeStatus(member, today, ChallengeStatus.ACTIVE);
+        List<DailyMemberChallenge> todaysAllChallenges = dailyMemberChallengeRepository
+                .findByMemberAndChallengeDate(member, today);
 
-        if (activeChallenges.isEmpty()) {
-            activeChallenges = createNewDailyChallenges(member, today);
+        if (todaysAllChallenges.isEmpty()) {
+            todaysAllChallenges = createNewDailyChallenges(member, today);
         }
 
-        activeChallenges.sort(Comparator.comparing(DailyMemberChallenge::getId));
-
-        List<DailyChallengeResDto> challengeDtos = activeChallenges.stream()
+        List<DailyChallengeResDto> challengeDtos = todaysAllChallenges.stream()
+                .filter(c -> c.getChallengeStatus() == ChallengeStatus.ACTIVE)
+                .sorted(Comparator.comparing(DailyMemberChallenge::getId))
                 .map(dmc -> DailyChallengeResDto.of(dmc.getId(),
                         dmc.getChallenge().getContents(),
                         dmc.getChallenge().getChallengeType(),
                         dmc.getChallengeStatus(), dmc.getChallenge().isTwoCut()))
                 .toList();
 
-        int completedCount = (int) activeChallenges.stream()
+        int completedCount = (int) todaysAllChallenges.stream()
                 .filter(c -> c.getChallengeStatus() == ChallengeStatus.COMPLETED)
                 .count();
 
-        List<String> stageStatus = activeChallenges.stream()
-                .map(DailyMemberChallenge::getChallengeStatus)
-                .map(status -> switch (status) {
-                    case COMPLETED -> "approved";
-                    case REJECTED -> "rejected";
-                    case PENDING_APPROVAL -> "pending";
-                    case ACTIVE -> "active";
-                    case EXPIRED -> "expired";
-                })
+        List<DailyMemberChallenge> finishedStageChallenges = todaysAllChallenges.stream()
+                .filter(c -> c.getChallengeStatus() == ChallengeStatus.COMPLETED ||
+                        c.getChallengeStatus() == ChallengeStatus.PENDING_APPROVAL ||
+                        c.getChallengeStatus() == ChallengeStatus.REJECTED)
+                .sorted(Comparator.comparing(DailyMemberChallenge::getId))
                 .toList();
+
+        List<String> stageStatus = new ArrayList<>();
+        for (DailyMemberChallenge challenge : finishedStageChallenges) {
+            stageStatus.add(switch (challenge.getChallengeStatus()) {
+                case COMPLETED -> "approved";
+                case REJECTED -> "rejected";
+                case PENDING_APPROVAL -> "pending";
+                default -> "unknown";
+            });
+        }
+        while (stageStatus.size() < 5) {
+            stageStatus.add("active");
+        }
+        if (stageStatus.size() > 5) {
+            stageStatus = stageStatus.subList(0, 5);
+        }
 
         return DailyChallengesResDto.of(member.getCurrentStage(), completedCount, stageStatus, challengeDtos);
     }
@@ -224,7 +238,9 @@ public class DailyChallengeService {
                 .findByMemberAndChallengeDateAndChallengeStatus(member, date, ChallengeStatus.ACTIVE);
         for (DailyMemberChallenge challenge : activeChallenges) {
             if (!challenge.getId().equals(completedChallengeId)) {
-                challenge.updateChallengeStatus(ChallengeStatus.EXPIRED);
+                if (challenge.getChallenge().getChallengeType() != ChallengeType.HARD) {
+                    challenge.updateChallengeStatus(ChallengeStatus.EXPIRED);
+                }
             }
         }
     }
