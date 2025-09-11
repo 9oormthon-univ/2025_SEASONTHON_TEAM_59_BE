@@ -11,12 +11,13 @@ import com.leafup.leafupbackend.member.domain.Member;
 import com.leafup.leafupbackend.member.domain.repository.DailyMemberChallengeImageRepository;
 import com.leafup.leafupbackend.member.domain.repository.DailyMemberChallengeRepository;
 import com.leafup.leafupbackend.member.exception.DailyMemberChallengeNotFoundException;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -51,6 +52,7 @@ public class AdminService {
     @Transactional
     public void approveChallenge(Long dailyMemberChallengeId) {
         DailyMemberChallenge dmc = findDailyChallengeById(dailyMemberChallengeId);
+
         dmc.updateChallengeStatus(ChallengeStatus.COMPLETED);
 
         Member member = dmc.getMember();
@@ -59,13 +61,6 @@ public class AdminService {
         levelService.addPointAndHandleLevelUpAndExp(member, dmc.getChallenge().getChallengeType().getPoint(), "데일리 챌린지 승인");
         dailyChallengeCacheService.deleteDailyChallengeCache(member.getEmail(), challengeDate, dmc.getMember().getCurrentStage());
         weeklyGardenService.recordChallengeCompletion(member, dmc.getChallenge());
-
-        int completedCount = dailyMemberChallengeRepository
-                .countByMemberAndChallengeDateAndChallengeStatus(member, challengeDate, ChallengeStatus.COMPLETED);
-
-        if (completedCount == 3) {
-            levelService.addPointAndHandleLevelUpAndExp(member, 20, "일일 챌린지 3개 완료 보너스");
-        }
     }
 
     @Transactional

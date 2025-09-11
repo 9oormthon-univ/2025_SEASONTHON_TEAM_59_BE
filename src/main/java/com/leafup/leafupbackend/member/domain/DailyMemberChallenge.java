@@ -2,17 +2,15 @@ package com.leafup.leafupbackend.member.domain;
 
 import com.leafup.leafupbackend.challenge.domain.Challenge;
 import com.leafup.leafupbackend.global.entity.BaseEntity;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import java.time.LocalDate;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -31,6 +29,9 @@ public class DailyMemberChallenge extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private ChallengeStatus challengeStatus;
+
+    @OneToMany(mappedBy = "dailyMemberChallenge", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DailyMemberChallengeImage> dailyMemberChallengeImages = new ArrayList<>();
 
     @Builder
     private DailyMemberChallenge(Member member, Challenge challenge, LocalDate challengeDate) {

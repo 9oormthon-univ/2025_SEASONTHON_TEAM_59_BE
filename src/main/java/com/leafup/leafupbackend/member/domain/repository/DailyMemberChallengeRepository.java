@@ -3,12 +3,13 @@ package com.leafup.leafupbackend.member.domain.repository;
 import com.leafup.leafupbackend.member.domain.ChallengeStatus;
 import com.leafup.leafupbackend.member.domain.DailyMemberChallenge;
 import com.leafup.leafupbackend.member.domain.Member;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Set;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
 
 public interface DailyMemberChallengeRepository extends JpaRepository<DailyMemberChallenge, Long> {
 
@@ -21,12 +22,5 @@ public interface DailyMemberChallengeRepository extends JpaRepository<DailyMembe
 
     int countByMemberAndChallengeDateAndChallengeStatus(Member member, LocalDate date, ChallengeStatus challengeStatus);
 
-    @Query("SELECT DISTINCT dmc.challenge.id FROM DailyMemberChallenge dmc WHERE dmc.member = :member AND dmc.challengeStatus = 'COMPLETED'")
-    Set<Long> findCompletedChallengeIdsByMember(@Param("member") Member member);
-
-    /**
-     * 특정 사용자의 특정 날짜에 해당하는 여러 챌린지 ID로 DailyMemberChallenge 목록을 조회합니다.
-     */
-    List<DailyMemberChallenge> findByMemberAndChallengeDateAndChallengeIdIn(Member member, LocalDate date, List<Long> challengeIds);
 
 }
