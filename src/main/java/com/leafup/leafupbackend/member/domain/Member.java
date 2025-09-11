@@ -5,11 +5,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 
 @Entity
 @Getter
@@ -53,6 +54,8 @@ public class Member extends BaseEntity {
 
     private LocalDate lastStreakUpdatedAt;
 
+    private LocalDate lastDailyBonusClaimedAt;
+
     @Builder
     private Member(String email, String name, String picture, SocialType socialType) {
         this.email = email;
@@ -67,6 +70,7 @@ public class Member extends BaseEntity {
         this.currentStage = 1;
         this.streak = 0;
         this.lastStreakUpdatedAt = null;
+        this.lastDailyBonusClaimedAt = null;
     }
 
     public void updateFirstLogin() {
@@ -125,6 +129,10 @@ public class Member extends BaseEntity {
 
     public void updateLastStreakUpdatedAt(LocalDate date) {
         this.lastStreakUpdatedAt = date;
+    }
+
+    public void updateLastDailyBonusClaimedAt(LocalDate date) {
+        this.lastDailyBonusClaimedAt = date;
     }
 
 }

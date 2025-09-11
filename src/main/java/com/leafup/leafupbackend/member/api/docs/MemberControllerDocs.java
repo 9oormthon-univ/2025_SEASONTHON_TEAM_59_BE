@@ -26,4 +26,10 @@ public interface MemberControllerDocs {
     ResponseEntity<RspTemplate<MemberInfoResDto>> onboarding(@AuthenticatedEmail String email,
                                                              @Valid @RequestBody OnboardingReqDto onboardingReqDto);
 
+    @Operation(summary = "일일 챌린지 3개 완료 보너스", description = "일일 챌린지 3개 완료 보너스를 요청합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "일일 챌린지 3개 완료 보너스 요청 성공")
+    })
+    ResponseEntity<RspTemplate<Void>> claimDailyBonus(@AuthenticatedEmail String email);
+    
 }

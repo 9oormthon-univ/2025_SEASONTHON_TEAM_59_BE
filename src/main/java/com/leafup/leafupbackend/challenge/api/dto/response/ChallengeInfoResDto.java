@@ -7,13 +7,15 @@ import lombok.Builder;
 public record ChallengeInfoResDto(
         String contents,
         int point,
-        ChallengeType challengeType
+        ChallengeType challengeType,
+        boolean isTwoCut
 ) {
-    public static ChallengeInfoResDto of(String contents, int point, ChallengeType challengeType) {
+    public static ChallengeInfoResDto of(String contents, int point, ChallengeType challengeType, boolean isTwoCut) {
         return ChallengeInfoResDto.builder()
                 .contents(contents)
                 .point(point)
                 .challengeType(challengeType)
+                .isTwoCut(isTwoCut)
                 .build();
     }
 }

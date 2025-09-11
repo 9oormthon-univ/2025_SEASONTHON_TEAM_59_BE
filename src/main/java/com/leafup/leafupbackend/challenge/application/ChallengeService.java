@@ -18,7 +18,7 @@ public class ChallengeService {
     public ChallengesResDto findChallengesByChallengeType(ChallengeType challengeType) {
         return ChallengesResDto.from(challengeRepository.findByChallengeType(challengeType).stream()
                 .map(c -> {
-                    return ChallengeInfoResDto.of(c.getContents(), c.getChallengeType().getPoint(), c.getChallengeType());
+                    return ChallengeInfoResDto.of(c.getContents(), c.getChallengeType().getPoint(), c.getChallengeType(), c.isTwoCut());
                 })
                 .toList());
     }

@@ -10,11 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -40,6 +36,17 @@ public class MemberController implements MemberControllerDocs {
                 .statusCode(HttpStatus.OK)
                 .message("온보딩 사용자 정보 저장 성공")
                 .data(memberService.onboarding(email, onboardingReqDto))
+                .build()
+                .toResponseEntity();
+    }
+
+
+    @PostMapping("/daily-bonus")
+    public ResponseEntity<RspTemplate<Void>> claimDailyBonus(@AuthenticatedEmail String email) {
+        memberService.claimDailyCompletionBonus(email);
+        return RspTemplate.<Void>builder()
+                .statusCode(HttpStatus.OK)
+                .message("일일 챌린지 3개 완료 보너스 요청 성공")
                 .build()
                 .toResponseEntity();
     }

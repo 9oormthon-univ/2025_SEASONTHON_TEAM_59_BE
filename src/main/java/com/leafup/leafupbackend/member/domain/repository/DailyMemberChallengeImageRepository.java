@@ -20,4 +20,6 @@ public interface DailyMemberChallengeImageRepository extends JpaRepository<Daily
             "WHERE dmc.challengeStatus = :status")
     List<DailyMemberChallengeImage> findPendingChallengesWithDetails(@Param("status") ChallengeStatus status);
 
+    int countByDailyMemberChallenge(DailyMemberChallenge dailyMemberChallenge);
+
 }

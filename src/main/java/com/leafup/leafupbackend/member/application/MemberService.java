@@ -2,14 +2,20 @@ package com.leafup.leafupbackend.member.application;
 
 import com.leafup.leafupbackend.member.api.dto.request.OnboardingReqDto;
 import com.leafup.leafupbackend.member.api.dto.response.MemberInfoResDto;
+import com.leafup.leafupbackend.member.domain.ChallengeStatus;
 import com.leafup.leafupbackend.member.domain.Member;
+import com.leafup.leafupbackend.member.domain.repository.DailyMemberChallengeRepository;
 import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
+import com.leafup.leafupbackend.member.exception.BonusAlreadyClaimedException;
+import com.leafup.leafupbackend.member.exception.DailyBonusNotEligibleException;
 import com.leafup.leafupbackend.member.exception.MemberNotFoundException;
-import java.security.SecureRandom;
-import java.util.Random;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.security.SecureRandom;
+import java.time.LocalDate;
+import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
 
     private final MemberRepository memberRepository;
+    private final DailyMemberChallengeRepository dailyMemberChallengeRepository;
+    private final LevelService levelService;
 
     public MemberInfoResDto getInfo(String email) {
         Member member = memberRepository.findByEmail(email).orElseThrow(MemberNotFoundException::new);
@@ -62,6 +70,27 @@ public class MemberService {
                 member.getLevel(),
                 member.getExp(),
                 member.getPoint());
+    }
+
+
+    @Transactional
+    public void claimDailyCompletionBonus(String email) {
+        Member member = memberRepository.findByEmail(email).orElseThrow(MemberNotFoundException::new);
+        LocalDate today = LocalDate.now();
+
+        if (today.equals(member.getLastDailyBonusClaimedAt())) {
+            throw new BonusAlreadyClaimedException();
+        }
+
+        int completedCount = dailyMemberChallengeRepository
+                .countByMemberAndChallengeDateAndChallengeStatus(member, today, ChallengeStatus.COMPLETED);
+
+        if (completedCount >= 3) {
+            levelService.addPointAndHandleLevelUpAndExp(member, 20, "일일 챌린지 3개 완료 보너스");
+            member.updateLastDailyBonusClaimedAt(today);
+        } else {
+            throw new DailyBonusNotEligibleException();
+        }
     }
 
     private String randomAlphaNumeric(int length) {

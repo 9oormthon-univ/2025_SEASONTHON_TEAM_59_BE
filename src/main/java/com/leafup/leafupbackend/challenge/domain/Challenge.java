@@ -19,10 +19,13 @@ public class Challenge extends BaseEntity {
     @Enumerated(value = EnumType.STRING)
     private ChallengeType challengeType;
 
+    private boolean isTwoCut;
+
     @Builder
     private Challenge(String contents, ChallengeType challengeType) {
         this.contents = contents;
         this.challengeType = challengeType;
+        this.isTwoCut = false;
     }
-    
+
 }
