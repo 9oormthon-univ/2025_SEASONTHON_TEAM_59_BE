@@ -87,30 +87,47 @@ public class DailyChallengeService {
         }
     }
 
+    @Transactional
+    public DailyChallengesResDto resetTodaysChallenges(String email) {
+        Member member = findMemberByEmail(email);
+        LocalDate today = LocalDate.now();
+
+        List<DailyMemberChallenge> todaysChallenges = dailyMemberChallengeRepository.findByMemberAndChallengeDate(member, today);
+        if (!todaysChallenges.isEmpty()) {
+            todaysChallenges.forEach(challenge -> challenge.updateChallengeStatus(ChallengeStatus.EXPIRED));
+        }
+
+        dailyChallengeCacheService.deleteDailyChallengeCache(email, today, member.getCurrentStage());
+
+        createNewChallenges(member, today, 2, 2, 1);
+
+        return getChallengesFromDb(member, today);
+    }
+
     private DailyChallengesResDto getChallengesFromDb(Member member, LocalDate today) {
         updateStageBasedOnSubmissionOrder(member, today);
 
-        List<DailyMemberChallenge> todaysAllChallenges = dailyMemberChallengeRepository
-                .findByMemberAndChallengeDate(member, today);
+        List<DailyMemberChallenge> activeChallenges = dailyMemberChallengeRepository
+                .findByMemberAndChallengeDateAndChallengeStatus(member, today, ChallengeStatus.ACTIVE);
 
-        if (todaysAllChallenges.isEmpty()) {
-            todaysAllChallenges = createNewDailyChallenges(member, today);
+        if (activeChallenges.isEmpty()) {
+            activeChallenges = createNewDailyChallenges(member, today);
         }
 
-        todaysAllChallenges.sort(Comparator.comparing(DailyMemberChallenge::getId));
+        activeChallenges.sort(Comparator.comparing(DailyMemberChallenge::getId));
 
-        List<DailyChallengeResDto> challengeDtos = todaysAllChallenges.stream()
+        List<DailyChallengeResDto> challengeDtos = activeChallenges.stream()
                 .map(dmc -> DailyChallengeResDto.of(dmc.getId(),
                         dmc.getChallenge().getContents(),
                         dmc.getChallenge().getChallengeType(),
                         dmc.getChallengeStatus(), dmc.getChallenge().isTwoCut()))
                 .toList();
 
-        int completedCount = (int) todaysAllChallenges.stream()
+        int completedCount = (int) activeChallenges.stream()
                 .filter(c -> c.getChallengeStatus() == ChallengeStatus.COMPLETED)
                 .count();
 
-        List<String> stageStatus = todaysAllChallenges.stream()
+        List<String> stageStatus = activeChallenges.stream()
                 .map(DailyMemberChallenge::getChallengeStatus)
                 .map(status -> switch (status) {
                     case COMPLETED -> "approved";
@@ -162,7 +179,7 @@ public class DailyChallengeService {
     }
 
     private List<DailyMemberChallenge> createNewChallenges(Member member, LocalDate today, int easyCount, int mediumCount, int hardCount) {
-        Set<Long> challengesToExclude = dailyMemberChallengeRepository.findChallengeIdsByMemberAndChallengeDate(member, today);
+        Set<Long> challengesToExclude = dailyMemberChallengeRepository.findChallengeIdsByMemberAndChallengeDateAndChallengeType(member, today, ChallengeType.HARD);
         List<Challenge> availableChallengesSource = challengeRepository.findAll();
 
         Map<ChallengeType, List<Challenge>> availableChallenges = availableChallengesSource.stream()

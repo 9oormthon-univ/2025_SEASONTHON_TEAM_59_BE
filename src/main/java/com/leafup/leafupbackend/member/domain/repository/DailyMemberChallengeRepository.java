@@ -1,5 +1,6 @@
 package com.leafup.leafupbackend.member.domain.repository;
 
+import com.leafup.leafupbackend.challenge.domain.ChallengeType;
 import com.leafup.leafupbackend.member.domain.ChallengeStatus;
 import com.leafup.leafupbackend.member.domain.DailyMemberChallenge;
 import com.leafup.leafupbackend.member.domain.Member;
@@ -17,10 +18,11 @@ public interface DailyMemberChallengeRepository extends JpaRepository<DailyMembe
 
     List<DailyMemberChallenge> findByMemberAndChallengeDateAndChallengeStatus(Member member, LocalDate date, ChallengeStatus challengeStatus);
 
-    @Query("SELECT dmc.challenge.id FROM DailyMemberChallenge dmc WHERE dmc.member = :member AND dmc.challengeDate = :date")
-    Set<Long> findChallengeIdsByMemberAndChallengeDate(@Param("member") Member member, @Param("date") LocalDate date);
+    @Query("SELECT dmc.challenge.id FROM DailyMemberChallenge dmc WHERE dmc.member = :member AND dmc.challengeDate = :date AND dmc.challenge.challengeType != :challengeType")
+    Set<Long> findChallengeIdsByMemberAndChallengeDateAndChallengeType(@Param("member") Member member,
+                                                                       @Param("date") LocalDate date,
+                                                                       @Param("challengeType") ChallengeType challengeType);
 
     int countByMemberAndChallengeDateAndChallengeStatus(Member member, LocalDate date, ChallengeStatus challengeStatus);
-
 
 }

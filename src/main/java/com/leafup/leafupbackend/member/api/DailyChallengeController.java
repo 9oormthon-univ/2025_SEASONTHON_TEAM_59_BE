@@ -42,4 +42,14 @@ public class DailyChallengeController implements DailyChallengeControllerDocs {
                 .toResponseEntity();
     }
 
+    @PostMapping("/today/reset")
+    public ResponseEntity<RspTemplate<DailyChallengesResDto>> resetTodaysChallenges(@AuthenticatedEmail String email) {
+        return RspTemplate.<DailyChallengesResDto>builder()
+                .statusCode(HttpStatus.OK)
+                .message("오늘의 챌린지 리셋")
+                .data(dailyChallengeService.resetTodaysChallenges(email))
+                .build()
+                .toResponseEntity();
+    }
+
 }

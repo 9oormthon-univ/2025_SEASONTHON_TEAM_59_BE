@@ -29,4 +29,10 @@ public interface DailyChallengeControllerDocs {
             @PathVariable("dailyMemberChallengeId") Long dailyMemberChallengeId,
             @Valid @RequestBody SubmitChallengeReqDto submitChallengeReqDto);
 
+    @Operation(summary = "오늘의 챌린지 리셋", description = "오늘의 챌린지를 리셋합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "오늘의 챌린지 리셋 성공")
+    })
+    ResponseEntity<RspTemplate<DailyChallengesResDto>> resetTodaysChallenges(@AuthenticatedEmail String email);
+
 }
