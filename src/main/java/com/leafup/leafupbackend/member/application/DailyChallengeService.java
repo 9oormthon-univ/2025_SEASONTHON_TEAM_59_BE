@@ -101,7 +101,7 @@ public class DailyChallengeService {
 
         dailyChallengeCacheService.deleteDailyChallengeCache(email, today, member.getCurrentStage());
 
-        createNewChallenges(member, today, 2, 2, 1);
+        createNewChallenges(member, today, 2, 2, 0);
 
         return getChallengesFromDb(member, today);
     }
@@ -118,7 +118,7 @@ public class DailyChallengeService {
 
         List<DailyChallengeResDto> challengeDtos = todaysAllChallenges.stream()
                 .filter(c -> c.getChallengeStatus() == ChallengeStatus.ACTIVE)
-                .sorted(Comparator.comparing(DailyMemberChallenge::getId))
+                .sorted(Comparator.comparing(dmc -> dmc.getChallenge().getChallengeType()))
                 .map(dmc -> DailyChallengeResDto.of(dmc.getId(),
                         dmc.getChallenge().getContents(),
                         dmc.getChallenge().getChallengeType(),
