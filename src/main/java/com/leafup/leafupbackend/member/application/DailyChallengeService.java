@@ -84,7 +84,7 @@ public class DailyChallengeService {
             if (dailyMemberChallenge.getChallenge().getChallengeType() == ChallengeType.HARD) {
                 createBonusDailyChallenges(member, LocalDate.now());
             } else {
-                createNewChallenges(member, LocalDate.now(), 2, 2, 0);
+                createNewChallenges(member, LocalDate.now(), 2, 2, 1);
             }
         }
     }
@@ -96,7 +96,11 @@ public class DailyChallengeService {
 
         List<DailyMemberChallenge> todaysChallenges = dailyMemberChallengeRepository.findByMemberAndChallengeDate(member, today);
         if (!todaysChallenges.isEmpty()) {
-            todaysChallenges.forEach(challenge -> challenge.updateChallengeStatus(ChallengeStatus.EXPIRED));
+            todaysChallenges
+                    .stream()
+                    .filter(challenge -> challenge.getChallenge().getChallengeType() != ChallengeType.HARD
+                            && challenge.getChallengeStatus() == ChallengeStatus.ACTIVE)
+                    .forEach(challenge -> challenge.updateChallengeStatus(ChallengeStatus.EXPIRED));
         }
 
         dailyChallengeCacheService.deleteDailyChallengeCache(email, today, member.getCurrentStage());
@@ -193,7 +197,14 @@ public class DailyChallengeService {
     }
 
     private List<DailyMemberChallenge> createNewChallenges(Member member, LocalDate today, int easyCount, int mediumCount, int hardCount) {
-        Set<Long> challengesToExclude = dailyMemberChallengeRepository.findChallengeIdsByMemberAndChallengeDateAndChallengeType(member, today, ChallengeType.HARD);
+        List<DailyMemberChallenge> previousStageChallenges = dailyMemberChallengeRepository
+                .findTop5ByMemberAndChallengeDateOrderByIdDesc(member, today);
+
+        Set<Long> challengesToExclude = previousStageChallenges.stream()
+                .filter(dmc -> dmc.getChallengeStatus() != ChallengeStatus.PENDING_APPROVAL)
+                .map(dmc -> dmc.getChallenge().getId())
+                .collect(Collectors.toSet());
+
         List<Challenge> availableChallengesSource = challengeRepository.findAll();
 
         Map<ChallengeType, List<Challenge>> availableChallenges = availableChallengesSource.stream()

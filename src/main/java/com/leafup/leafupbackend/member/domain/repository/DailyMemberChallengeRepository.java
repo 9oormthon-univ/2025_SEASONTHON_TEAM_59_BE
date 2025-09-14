@@ -23,6 +23,8 @@ public interface DailyMemberChallengeRepository extends JpaRepository<DailyMembe
                                                                        @Param("date") LocalDate date,
                                                                        @Param("challengeType") ChallengeType challengeType);
 
+    List<DailyMemberChallenge> findTop5ByMemberAndChallengeDateOrderByIdDesc(Member member, LocalDate date);
+
     int countByMemberAndChallengeDateAndChallengeStatus(Member member, LocalDate date, ChallengeStatus challengeStatus);
 
 }
