@@ -45,7 +45,17 @@ public class DailyChallengeService {
 
         Optional<DailyChallengesResDto> cachedChallenges = dailyChallengeCacheService.getCachedChallenges(email, today, currentStage);
         if (cachedChallenges.isPresent()) {
-            return cachedChallenges.get();
+            DailyChallengesResDto dailyChallengesResDto = cachedChallenges.get();
+
+            boolean isRewarded = today.equals(member.getLastDailyBonusClaimedAt());
+
+            return DailyChallengesResDto.of(
+                    dailyChallengesResDto.currentStage(),
+                    dailyChallengesResDto.completedCount(),
+                    isRewarded,
+                    dailyChallengesResDto.stageStatus(),
+                    dailyChallengesResDto.dailyChallengesResDtos()
+            );
         }
 
         DailyChallengesResDto todaysChallengesDto = getChallengesFromDb(member, today);
@@ -74,7 +84,7 @@ public class DailyChallengeService {
         boolean isTwoCut = dailyMemberChallenge.getChallenge().isTwoCut();
         int imageCount = isTwoCut ? dailyMemberChallengeImageRepository.countByDailyMemberChallenge(dailyMemberChallenge) : 1;
 
-        if ((isTwoCut && imageCount == 2) || !isTwoCut) {
+        if (!isTwoCut || imageCount == 2) {
             dailyMemberChallenge.updateChallengeStatus(ChallengeStatus.PENDING_APPROVAL);
             expireOtherActiveChallenges(member, LocalDate.now(), dailyMemberChallengeId);
             member.plusStage();
@@ -94,18 +104,17 @@ public class DailyChallengeService {
         Member member = findMemberByEmail(email);
         LocalDate today = LocalDate.now();
 
-        List<DailyMemberChallenge> todaysChallenges = dailyMemberChallengeRepository.findByMemberAndChallengeDate(member, today);
+        List<DailyMemberChallenge> todaysChallenges = dailyMemberChallengeRepository.findTop5ByMemberAndChallengeDateOrderByIdDesc(member, today);
         if (!todaysChallenges.isEmpty()) {
             todaysChallenges
                     .stream()
-                    .filter(challenge -> challenge.getChallenge().getChallengeType() != ChallengeType.HARD
-                            && challenge.getChallengeStatus() == ChallengeStatus.ACTIVE)
+                    .filter(challenge -> challenge.getChallengeStatus() == ChallengeStatus.ACTIVE)
                     .forEach(challenge -> challenge.updateChallengeStatus(ChallengeStatus.EXPIRED));
         }
 
         dailyChallengeCacheService.deleteDailyChallengeCache(email, today, member.getCurrentStage());
 
-        createNewChallenges(member, today, 2, 2, 0);
+        createNewChallenges(member, today, 2, 2, 1);
 
         return getChallengesFromDb(member, today);
     }
@@ -156,7 +165,9 @@ public class DailyChallengeService {
             stageStatus = stageStatus.subList(0, 5);
         }
 
-        return DailyChallengesResDto.of(member.getCurrentStage(), completedCount, stageStatus, challengeDtos);
+        boolean isRewarded = today.equals(member.getLastDailyBonusClaimedAt());
+
+        return DailyChallengesResDto.of(member.getCurrentStage(), completedCount, isRewarded, stageStatus, challengeDtos);
     }
 
     private void updateStageBasedOnSubmissionOrder(Member member, LocalDate today) {
@@ -201,7 +212,8 @@ public class DailyChallengeService {
                 .findTop5ByMemberAndChallengeDateOrderByIdDesc(member, today);
 
         Set<Long> challengesToExclude = previousStageChallenges.stream()
-                .filter(dmc -> dmc.getChallengeStatus() != ChallengeStatus.PENDING_APPROVAL)
+                .filter(dmc -> dmc.getChallengeStatus() != ChallengeStatus.PENDING_APPROVAL &&
+                        dmc.getChallenge().getChallengeType() != ChallengeType.HARD)
                 .map(dmc -> dmc.getChallenge().getId())
                 .collect(Collectors.toSet());
 
@@ -246,12 +258,10 @@ public class DailyChallengeService {
 
     private void expireOtherActiveChallenges(Member member, LocalDate date, Long completedChallengeId) {
         List<DailyMemberChallenge> activeChallenges = dailyMemberChallengeRepository
-                .findByMemberAndChallengeDateAndChallengeStatus(member, date, ChallengeStatus.ACTIVE);
+                .findTop5ByMemberAndChallengeDateAndChallengeStatusOrderByIdDesc(member, date, ChallengeStatus.ACTIVE);
         for (DailyMemberChallenge challenge : activeChallenges) {
             if (!challenge.getId().equals(completedChallengeId)) {
-                if (challenge.getChallenge().getChallengeType() != ChallengeType.HARD) {
-                    challenge.updateChallengeStatus(ChallengeStatus.EXPIRED);
-                }
+                challenge.updateChallengeStatus(ChallengeStatus.EXPIRED);
             }
         }
     }
