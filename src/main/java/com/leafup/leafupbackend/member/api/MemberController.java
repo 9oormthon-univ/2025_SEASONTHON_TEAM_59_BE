@@ -4,6 +4,7 @@ import com.github.giwoong01.springapicommon.template.RspTemplate;
 import com.leafup.leafupbackend.global.annotation.AuthenticatedEmail;
 import com.leafup.leafupbackend.member.api.docs.MemberControllerDocs;
 import com.leafup.leafupbackend.member.api.dto.request.OnboardingReqDto;
+import com.leafup.leafupbackend.member.api.dto.request.UpdateNicknameReqDto;
 import com.leafup.leafupbackend.member.api.dto.response.MemberInfoResDto;
 import com.leafup.leafupbackend.member.application.MemberService;
 import jakarta.validation.Valid;
@@ -40,6 +41,16 @@ public class MemberController implements MemberControllerDocs {
                 .toResponseEntity();
     }
 
+    @PostMapping("/nickname")
+    public ResponseEntity<RspTemplate<Void>> updateNickname(@AuthenticatedEmail String email,
+                                                            @Valid @RequestBody UpdateNicknameReqDto updateNicknameReqDto) {
+        memberService.updateNickname(email, updateNicknameReqDto);
+        return RspTemplate.<Void>builder()
+                .statusCode(HttpStatus.OK)
+                .message("닉네임 변경 성공")
+                .build()
+                .toResponseEntity();
+    }
 
     @PostMapping("/daily-bonus")
     public ResponseEntity<RspTemplate<Void>> claimDailyBonus(@AuthenticatedEmail String email) {
