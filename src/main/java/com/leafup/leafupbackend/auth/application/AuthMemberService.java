@@ -3,10 +3,15 @@ package com.leafup.leafupbackend.auth.application;
 import com.leafup.leafupbackend.auth.api.dto.response.UserInfo;
 import com.leafup.leafupbackend.auth.exception.ExistsMemberEmailException;
 import com.leafup.leafupbackend.member.api.dto.response.MemberInfoResDto;
+import com.leafup.leafupbackend.member.domain.Avatar;
 import com.leafup.leafupbackend.member.domain.Member;
+import com.leafup.leafupbackend.member.domain.MemberAvatar;
 import com.leafup.leafupbackend.member.domain.SocialType;
+import com.leafup.leafupbackend.member.domain.repository.AvatarRepository;
+import com.leafup.leafupbackend.member.domain.repository.MemberAvatarRepository;
 import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
-import java.util.Optional;
+import com.leafup.leafupbackend.member.exception.AvatarNotFoundException;
+import com.leafup.leafupbackend.member.exception.NoEquippedAvatarException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,12 +22,25 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthMemberService {
 
     private final MemberRepository memberRepository;
+    private final AvatarRepository avatarRepository;
+    private final MemberAvatarRepository memberAvatarRepository;
 
     @Transactional
     public MemberInfoResDto saveUserInfo(UserInfo userInfo, SocialType provider) {
-        Member member = getExistingMemberOrCreateNew(userInfo, provider);
+        Member member = memberRepository.findByEmail(userInfo.email())
+                .map(existingMember -> {
+                    validateSocialType(existingMember, provider);
+                    return existingMember;
+                })
+                .orElseGet(() -> {
+                    Member newMember = createMember(userInfo, provider);
+                    assignDefaultAvatar(newMember);
+                    return newMember;
+                });
 
-        validateSocialType(member, provider);
+        String avatarUrl = memberAvatarRepository.findEquippedByMemberWithAvatar(member)
+                .map(memberAvatar -> memberAvatar.getAvatar().getAvatarUrl())
+                .orElseThrow(NoEquippedAvatarException::new);
 
         return MemberInfoResDto.of(member.getEmail(),
                 member.getPicture(),
@@ -34,11 +52,8 @@ public class AuthMemberService {
                 member.isCameraAccessAllowed(),
                 member.getLevel(),
                 member.getExp(),
-                member.getPoint());
-    }
-
-    private Member getExistingMemberOrCreateNew(UserInfo userInfo, SocialType provider) {
-        return memberRepository.findByEmail(userInfo.email()).orElseGet(() -> createMember(userInfo, provider));
+                member.getPoint(),
+                avatarUrl);
     }
 
     private Member createMember(UserInfo userInfo, SocialType provider) {
@@ -56,13 +71,23 @@ public class AuthMemberService {
     }
 
     private String getUserPicture(String picture) {
-        return Optional.ofNullable(picture)
-                .map(this::convertToHighRes)
-                .orElseThrow(null);
+        if (picture == null) {
+            return null;
+        }
+
+        return convertToHighRes(picture);
     }
 
     private String convertToHighRes(String url) {
         return url.replace("s96-c", "s2048-c");
+    }
+
+    private void assignDefaultAvatar(Member member) {
+        Avatar defaultAvatar = avatarRepository.findById(1L).orElseThrow(AvatarNotFoundException::new);
+
+        MemberAvatar memberAvatar = MemberAvatar.builder().member(member).avatar(defaultAvatar).build();
+        memberAvatar.equip();
+        memberAvatarRepository.save(memberAvatar);
     }
 
     private void validateSocialType(Member member, SocialType provider) {

@@ -13,12 +13,14 @@ public record MemberInfoResDto(
         boolean isCameraAccessAllowed,
         int level,
         int exp,
-        int point
+        int point,
+        String avatarUrl
 ) {
     public static MemberInfoResDto of(String email, String picture, String socialType,
                                       boolean isFirstLogin, String nickname, String code,
                                       boolean isLocationAgreed, boolean isCameraAccessAllowed,
-                                      int level, int exp, int point) {
+                                      int level, int exp, int point,
+                                      String avatarUrl) {
         return MemberInfoResDto.builder()
                 .email(email)
                 .picture(picture)
@@ -30,6 +32,7 @@ public record MemberInfoResDto(
                 .level(level)
                 .exp(exp)
                 .point(point)
+                .avatarUrl(avatarUrl)
                 .build();
     }
 }
