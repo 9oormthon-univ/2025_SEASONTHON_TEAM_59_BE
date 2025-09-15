@@ -1,16 +1,15 @@
 package com.leafup.leafupbackend.member.domain;
 
 import com.leafup.leafupbackend.global.entity.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -55,6 +54,9 @@ public class Member extends BaseEntity {
     private LocalDate lastStreakUpdatedAt;
 
     private LocalDate lastDailyBonusClaimedAt;
+
+    @OneToMany(mappedBy = "member")
+    private List<MemberAvatar> memberAvatars = new ArrayList<>();
 
     @Builder
     private Member(String email, String name, String picture, SocialType socialType) {

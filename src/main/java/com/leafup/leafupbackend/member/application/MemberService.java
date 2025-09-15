@@ -6,10 +6,12 @@ import com.leafup.leafupbackend.member.api.dto.response.MemberInfoResDto;
 import com.leafup.leafupbackend.member.domain.ChallengeStatus;
 import com.leafup.leafupbackend.member.domain.Member;
 import com.leafup.leafupbackend.member.domain.repository.DailyMemberChallengeRepository;
+import com.leafup.leafupbackend.member.domain.repository.MemberAvatarRepository;
 import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
 import com.leafup.leafupbackend.member.exception.BonusAlreadyClaimedException;
 import com.leafup.leafupbackend.member.exception.DailyBonusNotEligibleException;
 import com.leafup.leafupbackend.member.exception.MemberNotFoundException;
+import com.leafup.leafupbackend.member.exception.NoEquippedAvatarException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,22 +27,13 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final DailyMemberChallengeRepository dailyMemberChallengeRepository;
+    private final MemberAvatarRepository memberAvatarRepository;
     private final LevelService levelService;
 
     public MemberInfoResDto getInfo(String email) {
         Member member = memberRepository.findByEmail(email).orElseThrow(MemberNotFoundException::new);
 
-        return MemberInfoResDto.of(member.getEmail(),
-                member.getPicture(),
-                String.valueOf(member.getSocialType()),
-                member.isFirstLogin(),
-                member.getNickname(),
-                member.getCode(),
-                member.isLocationAgreed(),
-                member.isCameraAccessAllowed(),
-                member.getLevel(),
-                member.getExp(),
-                member.getPoint());
+        return getMemberInfoResDto(member);
     }
 
     @Transactional
@@ -60,17 +53,7 @@ public class MemberService {
 
         member.updateFirstLogin();
 
-        return MemberInfoResDto.of(member.getEmail(),
-                member.getPicture(),
-                String.valueOf(member.getSocialType()),
-                member.isFirstLogin(),
-                member.getNickname(),
-                member.getCode(),
-                member.isLocationAgreed(),
-                member.isCameraAccessAllowed(),
-                member.getLevel(),
-                member.getExp(),
-                member.getPoint());
+        return getMemberInfoResDto(member);
     }
 
     @Transactional
@@ -83,7 +66,6 @@ public class MemberService {
 
         member.updateNickname(updateNicknameReqDto.nickname());
     }
-
 
     @Transactional
     public void claimDailyCompletionBonus(String email) {
@@ -113,6 +95,25 @@ public class MemberService {
             sb.append(chars.charAt(random.nextInt(chars.length())));
         }
         return sb.toString();
+    }
+
+    private MemberInfoResDto getMemberInfoResDto(Member member) {
+        String avatarUrl = memberAvatarRepository.findEquippedByMemberWithAvatar(member)
+                .map(memberAvatar -> memberAvatar.getAvatar().getAvatarUrl())
+                .orElseThrow(NoEquippedAvatarException::new);
+
+        return MemberInfoResDto.of(member.getEmail(),
+                member.getPicture(),
+                String.valueOf(member.getSocialType()),
+                member.isFirstLogin(),
+                member.getNickname(),
+                member.getCode(),
+                member.isLocationAgreed(),
+                member.isCameraAccessAllowed(),
+                member.getLevel(),
+                member.getExp(),
+                member.getPoint(),
+                avatarUrl);
     }
 
 }

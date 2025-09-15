@@ -21,11 +21,14 @@ public class Challenge extends BaseEntity {
 
     private boolean isTwoCut;
 
+    private double carbonReduction;
+
     @Builder
-    private Challenge(String contents, ChallengeType challengeType) {
+    private Challenge(String contents, ChallengeType challengeType, double carbonReduction) {
         this.contents = contents;
         this.challengeType = challengeType;
         this.isTwoCut = false;
+        this.carbonReduction = carbonReduction;
     }
 
 }
