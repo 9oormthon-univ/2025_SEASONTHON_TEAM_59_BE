@@ -2,6 +2,7 @@ package com.leafup.leafupbackend.member.api;
 
 import com.github.giwoong01.springapicommon.template.RspTemplate;
 import com.leafup.leafupbackend.global.annotation.AuthenticatedEmail;
+import com.leafup.leafupbackend.member.api.docs.MemberAvatarControllerDocs;
 import com.leafup.leafupbackend.member.api.dto.response.OwnedAvatarsResDto;
 import com.leafup.leafupbackend.member.application.MemberAvatarService;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/members/me/avatars")
-public class MemberAvatarController {
+public class MemberAvatarController implements MemberAvatarControllerDocs {
 
     private final MemberAvatarService memberAvatarService;
 
