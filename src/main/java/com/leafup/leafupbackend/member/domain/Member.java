@@ -90,6 +90,10 @@ public class Member extends BaseEntity {
         this.picture = picture;
     }
 
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
     public void plusStage() {
         this.currentStage += 1;
     }

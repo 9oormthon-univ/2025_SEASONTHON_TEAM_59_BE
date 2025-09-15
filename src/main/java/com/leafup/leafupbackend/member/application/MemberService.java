@@ -1,6 +1,7 @@
 package com.leafup.leafupbackend.member.application;
 
 import com.leafup.leafupbackend.member.api.dto.request.OnboardingReqDto;
+import com.leafup.leafupbackend.member.api.dto.request.UpdateNicknameReqDto;
 import com.leafup.leafupbackend.member.api.dto.response.MemberInfoResDto;
 import com.leafup.leafupbackend.member.domain.ChallengeStatus;
 import com.leafup.leafupbackend.member.domain.Member;
@@ -70,6 +71,17 @@ public class MemberService {
                 member.getLevel(),
                 member.getExp(),
                 member.getPoint());
+    }
+
+    @Transactional
+    public void updateNickname(String email, UpdateNicknameReqDto updateNicknameReqDto) {
+        Member member = memberRepository.findByEmail(email).orElseThrow(MemberNotFoundException::new);
+
+        if (member.getNickname().equals(updateNicknameReqDto.nickname())) {
+            return;
+        }
+
+        member.updateNickname(updateNicknameReqDto.nickname());
     }
 
 

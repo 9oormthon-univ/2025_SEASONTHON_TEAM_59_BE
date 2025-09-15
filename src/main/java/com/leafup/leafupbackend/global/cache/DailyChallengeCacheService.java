@@ -3,8 +3,8 @@ package com.leafup.leafupbackend.global.cache;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leafup.leafupbackend.member.api.dto.response.DailyChallengesResDto;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -15,11 +15,19 @@ import java.util.Optional;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class DailyChallengeCacheService {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
+    private final String activeProfile;
+
+    public DailyChallengeCacheService(RedisTemplate<String, String> redisTemplate,
+                                      ObjectMapper objectMapper,
+                                      @Value("${spring.profiles.active:local}") String activeProfile) {
+        this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
+        this.activeProfile = activeProfile;
+    }
 
     public Optional<DailyChallengesResDto> getCachedChallenges(String email, LocalDate date, int stage) {
         String cacheKey = buildCacheKey(email, date, stage);
@@ -54,7 +62,7 @@ public class DailyChallengeCacheService {
     }
 
     private String buildCacheKey(String email, LocalDate date, int stage) {
-        return "daily-challenges:" + email + ":" + date + ":" + stage;
+        return activeProfile + ":daily-challenges:" + email + ":" + date + ":" + stage;
     }
-    
+
 }
