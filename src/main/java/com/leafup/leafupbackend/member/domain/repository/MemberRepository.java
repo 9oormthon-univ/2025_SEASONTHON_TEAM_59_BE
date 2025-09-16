@@ -1,9 +1,12 @@
 package com.leafup.leafupbackend.member.domain.repository;
 
 import com.leafup.leafupbackend.member.domain.Member;
+import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
@@ -18,5 +21,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     long countByPointGreaterThan(int point);
 
     long countByStreakGreaterThan(int streak);
+
+    @Query("SELECT m FROM Member m LEFT JOIN FETCH m.memberAchievements WHERE m.email = :email")
+    Optional<Member> findByEmailWithAchievements(@Param("email") String email);
 
 }

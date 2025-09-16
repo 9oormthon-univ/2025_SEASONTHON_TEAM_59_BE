@@ -1,5 +1,6 @@
 package com.leafup.leafupbackend.member.domain;
 
+import com.leafup.leafupbackend.achievement.domain.MemberAchievement;
 import com.leafup.leafupbackend.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -55,7 +56,16 @@ public class Member extends BaseEntity {
 
     private LocalDate lastDailyBonusClaimedAt;
 
-    @OneToMany(mappedBy = "member")
+    private int dailyCompletionCount;
+
+    private int weeklyGardenCompletionCount;
+
+    private int storePurchaseCount;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MemberAchievement> memberAchievements = new ArrayList<>();
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberAvatar> memberAvatars = new ArrayList<>();
 
     @Builder
@@ -73,6 +83,9 @@ public class Member extends BaseEntity {
         this.streak = 0;
         this.lastStreakUpdatedAt = null;
         this.lastDailyBonusClaimedAt = null;
+        this.dailyCompletionCount = 0;
+        this.weeklyGardenCompletionCount = 0;
+        this.storePurchaseCount = 0;
     }
 
     public void updateFirstLogin() {
@@ -139,6 +152,18 @@ public class Member extends BaseEntity {
 
     public void updateLastDailyBonusClaimedAt(LocalDate date) {
         this.lastDailyBonusClaimedAt = date;
+    }
+
+    public void incrementDailyCompletionCount() {
+        this.dailyCompletionCount++;
+    }
+
+    public void incrementWeeklyGardenCompletionCount() {
+        this.weeklyGardenCompletionCount++;
+    }
+
+    public void incrementStorePurchaseCount() {
+        this.storePurchaseCount++;
     }
 
 }

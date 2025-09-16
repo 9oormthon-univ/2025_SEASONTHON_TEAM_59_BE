@@ -82,6 +82,7 @@ public class MemberService {
         if (completedCount >= 3) {
             levelService.addPointAndHandleLevelUpAndExp(member, 20, "일일 챌린지 3개 완료 보너스");
             member.updateLastDailyBonusClaimedAt(today);
+            member.incrementDailyCompletionCount();
         } else {
             throw new DailyBonusNotEligibleException();
         }
