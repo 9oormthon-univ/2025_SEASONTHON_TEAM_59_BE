@@ -7,13 +7,12 @@ import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
 import com.leafup.leafupbackend.member.exception.MemberNotFoundException;
 import com.leafup.leafupbackend.statistics.api.dto.response.GlobalStatisticsResDto;
 import com.leafup.leafupbackend.statistics.api.dto.response.MyStatisticsResDto;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +28,8 @@ public class StatisticsService {
     public MyStatisticsResDto getMyStatistics(String email) {
         Member member = findMemberByEmail(email);
 
-        double totalCarbonReduction = dailyMemberChallengeRepository.sumTotalCarbonReductionByMember(member, ChallengeStatus.COMPLETED);
+        double totalCarbonReduction = dailyMemberChallengeRepository
+                .sumTotalCarbonReductionByMember(member, ChallengeStatus.COMPLETED);
 
         double treesPlantedEffect = totalCarbonReduction / TREE_CONVERSION_FACTOR;
         double carEmissionReductionEffect = totalCarbonReduction / CAR_EMISSION_CONVERSION_FACTOR;
@@ -38,8 +38,10 @@ public class StatisticsService {
     }
 
     public GlobalStatisticsResDto getGlobalStatistics() {
-        double totalCarbonReduction = dailyMemberChallengeRepository.sumTotalCarbonReductionForAllUsers(ChallengeStatus.COMPLETED);
+        double totalCarbonReduction = dailyMemberChallengeRepository
+                .sumTotalCarbonReductionForAllUsers(ChallengeStatus.COMPLETED);
 
+        long totalUserCount = memberRepository.count();
         Optional<LocalDate> serviceStartDateOpt = dailyMemberChallengeRepository.findMinChallengeDate();
         long serviceOperatingDays = serviceStartDateOpt
                 .map(startDate -> ChronoUnit.DAYS.between(startDate, LocalDate.now()) + 1)
@@ -52,7 +54,7 @@ public class StatisticsService {
 
         return GlobalStatisticsResDto.of(
                 totalCarbonReduction,
-                serviceOperatingDays,
+                totalUserCount,
                 dailyAverageReduction,
                 treesPlantedEffect,
                 carEmissionReductionEffect
