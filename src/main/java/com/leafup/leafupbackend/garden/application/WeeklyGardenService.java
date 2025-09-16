@@ -10,13 +10,16 @@ import com.leafup.leafupbackend.member.application.LevelService;
 import com.leafup.leafupbackend.member.domain.Member;
 import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
 import com.leafup.leafupbackend.member.exception.MemberNotFoundException;
+import java.time.LocalDate;
+import java.time.temporal.WeekFields;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.time.temporal.WeekFields;
-import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -50,7 +53,7 @@ public class WeeklyGardenService {
         if (isNewChallenge &&
                 weeklyGarden.getCompletedChallengeIds().size() == 9 &&
                 !weeklyGarden.isBonusAwarded()) {
-            levelService.addPointAndHandleLevelUpAndExp(member, 100, "주간 텃밭 9칸 완성 보너스");
+            levelService.grantExpAndPoint(member, 100, "주간 텃밭 9칸 완성 보너스");
             weeklyGarden.markBonusAsAwarded();
             member.incrementWeeklyGardenCompletionCount();
         }

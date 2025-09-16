@@ -12,13 +12,12 @@ import com.leafup.leafupbackend.member.exception.BonusAlreadyClaimedException;
 import com.leafup.leafupbackend.member.exception.DailyBonusNotEligibleException;
 import com.leafup.leafupbackend.member.exception.MemberNotFoundException;
 import com.leafup.leafupbackend.member.exception.NoEquippedAvatarException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.util.Random;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -80,7 +79,7 @@ public class MemberService {
                 .countByMemberAndChallengeDateAndChallengeStatus(member, today, ChallengeStatus.COMPLETED);
 
         if (completedCount >= 3) {
-            levelService.addPointAndHandleLevelUpAndExp(member, 20, "일일 챌린지 3개 완료 보너스");
+            levelService.grantExpAndPoint(member, 20, "일일 챌린지 3개 완료 보너스");
             member.updateLastDailyBonusClaimedAt(today);
             member.incrementDailyCompletionCount();
         } else {
@@ -103,6 +102,8 @@ public class MemberService {
                 .map(memberAvatar -> memberAvatar.getAvatar().getAvatarUrl())
                 .orElseThrow(NoEquippedAvatarException::new);
 
+        int expBarPercent = levelService.getExpBarPercent(member);
+
         return MemberInfoResDto.of(member.getEmail(),
                 member.getPicture(),
                 String.valueOf(member.getSocialType()),
@@ -114,7 +115,8 @@ public class MemberService {
                 member.getLevel(),
                 member.getExp(),
                 member.getPoint(),
-                avatarUrl);
+                avatarUrl,
+                expBarPercent);
     }
 
 }
