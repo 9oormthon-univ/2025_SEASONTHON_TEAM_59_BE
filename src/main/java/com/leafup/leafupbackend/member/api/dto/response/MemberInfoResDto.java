@@ -14,13 +14,14 @@ public record MemberInfoResDto(
         int level,
         int exp,
         int point,
-        String avatarUrl
+        String avatarUrl,
+        int expBarPercent
 ) {
     public static MemberInfoResDto of(String email, String picture, String socialType,
                                       boolean isFirstLogin, String nickname, String code,
                                       boolean isLocationAgreed, boolean isCameraAccessAllowed,
                                       int level, int exp, int point,
-                                      String avatarUrl) {
+                                      String avatarUrl, int expBarPercent) {
         return MemberInfoResDto.builder()
                 .email(email)
                 .picture(picture)
@@ -33,6 +34,7 @@ public record MemberInfoResDto(
                 .exp(exp)
                 .point(point)
                 .avatarUrl(avatarUrl)
+                .expBarPercent(expBarPercent)
                 .build();
     }
 }

@@ -11,13 +11,12 @@ import com.leafup.leafupbackend.member.domain.Member;
 import com.leafup.leafupbackend.member.domain.repository.DailyMemberChallengeImageRepository;
 import com.leafup.leafupbackend.member.domain.repository.DailyMemberChallengeRepository;
 import com.leafup.leafupbackend.member.exception.DailyMemberChallengeNotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -58,8 +57,9 @@ public class AdminService {
         Member member = dmc.getMember();
         LocalDate challengeDate = dmc.getChallengeDate();
 
-        levelService.addPointAndHandleLevelUpAndExp(member, dmc.getChallenge().getChallengeType().getPoint(), "데일리 챌린지 승인");
-        dailyChallengeCacheService.deleteDailyChallengeCache(member.getEmail(), challengeDate, dmc.getMember().getCurrentStage());
+        levelService.grantExpAndPoint(member, dmc.getChallenge().getChallengeType().getPoint(), "데일리 챌린지 승인");
+        dailyChallengeCacheService.deleteDailyChallengeCache(member.getEmail(), challengeDate,
+                dmc.getMember().getCurrentStage());
         weeklyGardenService.recordChallengeCompletion(member, dmc.getChallenge());
     }
 

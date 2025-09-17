@@ -3,6 +3,7 @@ package com.leafup.leafupbackend.auth.application;
 import com.leafup.leafupbackend.auth.api.dto.response.UserInfo;
 import com.leafup.leafupbackend.auth.exception.ExistsMemberEmailException;
 import com.leafup.leafupbackend.member.api.dto.response.MemberInfoResDto;
+import com.leafup.leafupbackend.member.application.LevelService;
 import com.leafup.leafupbackend.member.domain.Avatar;
 import com.leafup.leafupbackend.member.domain.Member;
 import com.leafup.leafupbackend.member.domain.MemberAvatar;
@@ -23,6 +24,7 @@ public class AuthMemberService {
 
     private final MemberRepository memberRepository;
     private final AvatarRepository avatarRepository;
+    private final LevelService levelService;
     private final MemberAvatarRepository memberAvatarRepository;
 
     @Transactional
@@ -42,6 +44,8 @@ public class AuthMemberService {
                 .map(memberAvatar -> memberAvatar.getAvatar().getAvatarUrl())
                 .orElseThrow(NoEquippedAvatarException::new);
 
+        int expBarPercent = levelService.getExpBarPercent(member);
+
         return MemberInfoResDto.of(member.getEmail(),
                 member.getPicture(),
                 String.valueOf(member.getSocialType()),
@@ -53,7 +57,8 @@ public class AuthMemberService {
                 member.getLevel(),
                 member.getExp(),
                 member.getPoint(),
-                avatarUrl);
+                avatarUrl,
+                expBarPercent);
     }
 
     private Member createMember(UserInfo userInfo, SocialType provider) {

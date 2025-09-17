@@ -76,6 +76,7 @@ public class StoreService {
                 .member(member)
                 .avatar(avatar)
                 .build();
+        member.incrementStorePurchaseCount();
         memberAvatarRepository.save(memberAvatar);
     }
 

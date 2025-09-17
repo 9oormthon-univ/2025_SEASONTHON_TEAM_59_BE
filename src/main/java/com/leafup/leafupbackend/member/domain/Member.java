@@ -1,15 +1,20 @@
 package com.leafup.leafupbackend.member.domain;
 
+import com.leafup.leafupbackend.achievement.domain.MemberAchievement;
 import com.leafup.leafupbackend.global.entity.BaseEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.OneToMany;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter
@@ -55,7 +60,16 @@ public class Member extends BaseEntity {
 
     private LocalDate lastDailyBonusClaimedAt;
 
-    @OneToMany(mappedBy = "member")
+    private int dailyCompletionCount;
+
+    private int weeklyGardenCompletionCount;
+
+    private int storePurchaseCount;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MemberAchievement> memberAchievements = new ArrayList<>();
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberAvatar> memberAvatars = new ArrayList<>();
 
     @Builder
@@ -73,6 +87,9 @@ public class Member extends BaseEntity {
         this.streak = 0;
         this.lastStreakUpdatedAt = null;
         this.lastDailyBonusClaimedAt = null;
+        this.dailyCompletionCount = 0;
+        this.weeklyGardenCompletionCount = 0;
+        this.storePurchaseCount = 0;
     }
 
     public void updateFirstLogin() {
@@ -104,12 +121,12 @@ public class Member extends BaseEntity {
         this.currentStage = currentStage;
     }
 
-    public void updateLevel(int level) {
-        this.level = level;
+    public void levelUp() {
+        this.level++;
     }
 
-    public void updateExp(int exp) {
-        this.exp = exp;
+    public void plusExp(int exp) {
+        this.exp += exp;
     }
 
     public void plusPoint(int point) {
@@ -139,6 +156,18 @@ public class Member extends BaseEntity {
 
     public void updateLastDailyBonusClaimedAt(LocalDate date) {
         this.lastDailyBonusClaimedAt = date;
+    }
+
+    public void incrementDailyCompletionCount() {
+        this.dailyCompletionCount++;
+    }
+
+    public void incrementWeeklyGardenCompletionCount() {
+        this.weeklyGardenCompletionCount++;
+    }
+
+    public void incrementStorePurchaseCount() {
+        this.storePurchaseCount++;
     }
 
 }

@@ -14,4 +14,8 @@ public interface MonthlyRankingRepository extends JpaRepository<MonthlyRanking, 
 
     Optional<MonthlyRanking> findByYearAndMonthAndRegionAndMember(int year, int month, String region, Member member);
 
+    boolean existsByYearAndMonth(int year, int month);
+
+    void deleteByYearAndMonth(int year, int month);
+
 }

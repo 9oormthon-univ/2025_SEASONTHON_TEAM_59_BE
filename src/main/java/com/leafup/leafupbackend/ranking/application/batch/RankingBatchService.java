@@ -27,10 +27,25 @@ public class RankingBatchService {
     @Transactional
     public void aggregateAndSaveMonthlyRankings() {
         LocalDate lastMonth = LocalDate.now().minusMonths(1);
-        int year = lastMonth.getYear();
-        int month = lastMonth.getMonthValue();
+        processMonthlyRanking(lastMonth.getYear(), lastMonth.getMonthValue());
+    }
 
+    /**
+     * [테스트용] 현재 시점의 월간 랭킹을 집계하여 저장합니다. 이 메서드는 API를 통해 수동으로 호출됩니다.
+     */
+    @Transactional
+    public void triggerCurrentMonthRankingAggregation() {
+        LocalDate thisMonth = LocalDate.now();
+        processMonthlyRanking(thisMonth.getYear(), thisMonth.getMonthValue());
+    }
+
+    private void processMonthlyRanking(int year, int month) {
         log.info("월간 랭킹 집계를 시작합니다. ({}년 {}월)", year, month);
+
+        if (monthlyRankingRepository.existsByYearAndMonth(year, month)) {
+            log.warn("{}년 {}월의 랭킹 데이터가 이미 존재하여, 기존 데이터를 삭제하고 다시 집계합니다.", year, month);
+            monthlyRankingRepository.deleteByYearAndMonth(year, month);
+        }
 
         List<MonthlyPointAggregationDto> monthlyPoints = pointHistoryRepository.aggregateMonthlyPoints(year, month);
 

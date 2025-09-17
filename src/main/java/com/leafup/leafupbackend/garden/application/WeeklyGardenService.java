@@ -53,8 +53,9 @@ public class WeeklyGardenService {
         if (isNewChallenge &&
                 weeklyGarden.getCompletedChallengeIds().size() == 9 &&
                 !weeklyGarden.isBonusAwarded()) {
-            levelService.addPointAndHandleLevelUpAndExp(member, 100, "주간 텃밭 9칸 완성 보너스");
+            levelService.grantExpAndPoint(member, 100, "주간 텃밭 9칸 완성 보너스");
             weeklyGarden.markBonusAsAwarded();
+            member.incrementWeeklyGardenCompletionCount();
         }
     }
 
