@@ -12,13 +12,12 @@ import com.leafup.leafupbackend.store.api.dto.response.StoreAvatarResDto;
 import com.leafup.leafupbackend.store.api.dto.response.StoreAvatarsResDto;
 import com.leafup.leafupbackend.store.exception.AvatarAlreadyOwnedException;
 import com.leafup.leafupbackend.store.exception.InsufficientPointsException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +48,8 @@ public class StoreService {
 
                     return StoreAvatarResDto.builder()
                             .avatarId(avatar.getId())
+                            .name(avatar.getName())
+                            .type(String.valueOf(avatar.getType()))
                             .avatarUrl(avatar.getAvatarUrl())
                             .point(avatar.getPoint())
                             .isOwned(isOwned)

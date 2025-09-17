@@ -6,6 +6,8 @@ import com.leafup.leafupbackend.garden.api.dto.response.CompletedChallengeDto;
 import com.leafup.leafupbackend.garden.api.dto.response.WeeklyGardenResDto;
 import com.leafup.leafupbackend.garden.domain.WeeklyGarden;
 import com.leafup.leafupbackend.garden.domain.repository.WeeklyGardenRepository;
+import com.leafup.leafupbackend.garden.excepion.AlreadyHarvestedTodayException;
+import com.leafup.leafupbackend.garden.excepion.NoFruitToHarvestException;
 import com.leafup.leafupbackend.member.application.LevelService;
 import com.leafup.leafupbackend.member.domain.Member;
 import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
@@ -57,6 +59,31 @@ public class WeeklyGardenService {
             weeklyGarden.markBonusAsAwarded();
             member.incrementWeeklyGardenCompletionCount();
         }
+    }
+
+    @Transactional
+    public void harvestFromGarden(String email) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(MemberNotFoundException::new);
+
+        LocalDate today = LocalDate.now();
+        if (today.equals(member.getLastGardenHarvestDate())) {
+            throw new AlreadyHarvestedTodayException();
+        }
+
+        int year = today.getYear();
+        int weekOfYear = today.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
+
+        boolean canHarvest = weeklyGardenRepository.findByMemberAndYearAndWeekOfYear(member, year, weekOfYear)
+                .map(garden -> !garden.getCompletedChallengeIds().isEmpty())
+                .orElse(false);
+
+        if (!canHarvest) {
+            throw new NoFruitToHarvestException();
+        }
+
+        levelService.grantExpAndPoint(member, 5, "텃밭 열매 수확");
+        member.updateLastGardenHarvestDate();
     }
 
     public WeeklyGardenResDto getWeeklyGardenStatus(String email) {

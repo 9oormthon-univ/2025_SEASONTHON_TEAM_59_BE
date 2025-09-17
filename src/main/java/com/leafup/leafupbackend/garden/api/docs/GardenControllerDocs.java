@@ -16,4 +16,10 @@ public interface GardenControllerDocs {
     })
     ResponseEntity<RspTemplate<WeeklyGardenResDto>> getWeeklyGardenStatus(@AuthenticatedEmail String email);
 
+    @Operation(summary = "주간 텃밭 열매 수확", description = "주간 텃밭에서 열매를 수확하여 5포인트를 획득합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "주간 텃밭 현황 조회 성공")
+    })
+    ResponseEntity<RspTemplate<Void>> harvestFromGarden(@AuthenticatedEmail String email);
+
 }

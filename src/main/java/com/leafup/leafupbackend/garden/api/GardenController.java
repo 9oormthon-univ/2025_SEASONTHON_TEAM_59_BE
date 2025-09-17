@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,5 +30,15 @@ public class GardenController implements GardenControllerDocs {
                 .build()
                 .toResponseEntity();
     }
-    
+
+    @PostMapping("/harvest")
+    public ResponseEntity<RspTemplate<Void>> harvestFromGarden(@AuthenticatedEmail String email) {
+        weeklyGardenService.harvestFromGarden(email);
+        return RspTemplate.<Void>builder()
+                .statusCode(HttpStatus.OK)
+                .message("열매 수확 성공")
+                .build()
+                .toResponseEntity();
+    }
+
 }

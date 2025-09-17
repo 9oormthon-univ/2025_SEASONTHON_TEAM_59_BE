@@ -64,6 +64,8 @@ public class Member extends BaseEntity {
 
     private int weeklyGardenCompletionCount;
 
+    private LocalDate lastGardenHarvestDate;
+
     private int storePurchaseCount;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -89,6 +91,7 @@ public class Member extends BaseEntity {
         this.lastDailyBonusClaimedAt = null;
         this.dailyCompletionCount = 0;
         this.weeklyGardenCompletionCount = 0;
+        this.lastGardenHarvestDate = null;
         this.storePurchaseCount = 0;
     }
 
@@ -168,6 +171,10 @@ public class Member extends BaseEntity {
 
     public void incrementStorePurchaseCount() {
         this.storePurchaseCount++;
+    }
+
+    public void updateLastGardenHarvestDate() {
+        this.lastGardenHarvestDate = LocalDate.now();
     }
 
 }
