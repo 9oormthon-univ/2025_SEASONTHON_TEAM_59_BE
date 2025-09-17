@@ -8,11 +8,10 @@ import com.leafup.leafupbackend.member.domain.repository.MemberAvatarRepository;
 import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
 import com.leafup.leafupbackend.member.exception.AvatarOwnershipException;
 import com.leafup.leafupbackend.member.exception.MemberNotFoundException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +28,8 @@ public class MemberAvatarService {
         return OwnedAvatarsResDto.from(ownedAvatars.stream()
                 .map(ma -> OwnedAvatarResDto.from(
                         ma.getAvatar().getId(),
+                        ma.getAvatar().getName(),
+                        String.valueOf(ma.getAvatar().getType()),
                         ma.getAvatar().getAvatarUrl(),
                         ma.isEquipped())
                 )
