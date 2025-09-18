@@ -68,6 +68,8 @@ public class Member extends BaseEntity {
 
     private int storePurchaseCount;
 
+    private double carbonReduction;
+
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberAchievement> memberAchievements = new ArrayList<>();
 
@@ -93,6 +95,7 @@ public class Member extends BaseEntity {
         this.weeklyGardenCompletionCount = 0;
         this.lastGardenHarvestDate = null;
         this.storePurchaseCount = 0;
+        this.carbonReduction = 0.0;
     }
 
     public void updateFirstLogin() {
@@ -175,6 +178,10 @@ public class Member extends BaseEntity {
 
     public void updateLastGardenHarvestDate() {
         this.lastGardenHarvestDate = LocalDate.now();
+    }
+
+    public void addCarbonReduction(double amount) {
+        this.carbonReduction += amount;
     }
 
 }

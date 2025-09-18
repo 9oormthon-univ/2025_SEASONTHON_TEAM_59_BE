@@ -28,8 +28,7 @@ public class StatisticsService {
     public MyStatisticsResDto getMyStatistics(String email) {
         Member member = findMemberByEmail(email);
 
-        double totalCarbonReduction = dailyMemberChallengeRepository
-                .sumTotalCarbonReductionByMember(member, ChallengeStatus.COMPLETED);
+        double totalCarbonReduction = member.getCarbonReduction();
 
         double treesPlantedEffect = totalCarbonReduction / TREE_CONVERSION_FACTOR;
         double carEmissionReductionEffect = totalCarbonReduction / CAR_EMISSION_CONVERSION_FACTOR;
@@ -41,7 +40,7 @@ public class StatisticsService {
         double totalCarbonReduction = dailyMemberChallengeRepository
                 .sumTotalCarbonReductionForAllUsers(ChallengeStatus.COMPLETED);
 
-        long totalUserCount = memberRepository.count();
+        long totalMemberCount = memberRepository.count();
         Optional<LocalDate> serviceStartDateOpt = dailyMemberChallengeRepository.findMinChallengeDate();
         long serviceOperatingDays = serviceStartDateOpt
                 .map(startDate -> ChronoUnit.DAYS.between(startDate, LocalDate.now()) + 1)
@@ -54,7 +53,7 @@ public class StatisticsService {
 
         return GlobalStatisticsResDto.of(
                 totalCarbonReduction,
-                totalUserCount,
+                totalMemberCount,
                 dailyAverageReduction,
                 treesPlantedEffect,
                 carEmissionReductionEffect
