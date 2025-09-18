@@ -2,12 +2,12 @@ package com.leafup.leafupbackend.garden.domain;
 
 import com.leafup.leafupbackend.global.entity.BaseEntity;
 import com.leafup.leafupbackend.member.domain.Member;
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.ElementCollection;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AccessLevel;
@@ -28,9 +28,8 @@ public class WeeklyGarden extends BaseEntity {
 
     private int weekOfYear;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "weekly_garden_completed_challenges", joinColumns = @JoinColumn(name = "weekly_garden_id"))
-    private Set<Long> completedChallengeIds = new HashSet<>();
+    @OneToMany(mappedBy = "weeklyGarden", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<GardenFruit> fruits = new HashSet<>();
 
     private boolean bonusAwarded;
 
@@ -42,12 +41,12 @@ public class WeeklyGarden extends BaseEntity {
         this.bonusAwarded = false;
     }
 
-    public boolean addCompletedChallenge(Long challengeId) {
-        return this.completedChallengeIds.add(challengeId);
-    }
-
     public void markBonusAsAwarded() {
         this.bonusAwarded = true;
+    }
+
+    public void addFruit(GardenFruit fruit) {
+        this.fruits.add(fruit);
     }
 
 }

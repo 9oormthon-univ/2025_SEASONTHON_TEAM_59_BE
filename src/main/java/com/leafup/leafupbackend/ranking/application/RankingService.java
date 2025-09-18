@@ -48,6 +48,7 @@ public class RankingService {
                 .map(ranking -> RankingResDto.of(
                         rank.getAndIncrement(),
                         ranking.getMember().getNickname(),
+                        ranking.getMember().getCode(),
                         ranking.getMember().getPicture(),
                         ranking.getPoint()))
                 .toList();
@@ -71,7 +72,7 @@ public class RankingService {
                 .findByYearAndMonthAndRegionAndMember(year, month, region, member);
 
         if (myMonthlyRankingOpt.isEmpty()) {
-            return MyRankingResDto.of(0, member.getNickname(), member.getPicture(), 0);
+            return MyRankingResDto.of(0, member.getNickname(), member.getCode(), member.getPicture(), 0);
         }
 
         MonthlyRanking myMonthlyRanking = myMonthlyRankingOpt.get();
@@ -79,7 +80,11 @@ public class RankingService {
                 .countByYearAndMonthAndRegionAndPointGreaterThan(year, month, region, myMonthlyRanking.getPoint());
         long myRank = higherRankCount + 1;
 
-        return MyRankingResDto.of(myRank, member.getNickname(), member.getPicture(), myMonthlyRanking.getPoint());
+        return MyRankingResDto.of(myRank,
+                member.getNickname(),
+                member.getCode(),
+                member.getPicture(),
+                myMonthlyRanking.getPoint());
     }
 
     private RankingsResDto createRankingsFrom(List<Member> members, Function<Member, Long> scoreExtractor) {
@@ -88,6 +93,7 @@ public class RankingService {
                 .map(member -> RankingResDto.of(
                         rank.getAndIncrement(),
                         member.getNickname(),
+                        member.getCode(),
                         member.getPicture(),
                         scoreExtractor.apply(member)
                 ))
@@ -101,7 +107,7 @@ public class RankingService {
         int score = scoreExtractor.applyAsInt(member);
         long higherRankCount = rankCounter.applyAsLong(score);
         long myRank = higherRankCount + 1;
-        return MyRankingResDto.of(myRank, member.getNickname(), member.getPicture(), score);
+        return MyRankingResDto.of(myRank, member.getNickname(), member.getCode(), member.getPicture(), score);
     }
 
 }

@@ -1,12 +1,12 @@
 package com.leafup.leafupbackend.garden.application;
 
 import com.leafup.leafupbackend.challenge.domain.Challenge;
-import com.leafup.leafupbackend.challenge.domain.repository.ChallengeRepository;
-import com.leafup.leafupbackend.garden.api.dto.response.CompletedChallengeDto;
+import com.leafup.leafupbackend.garden.api.dto.response.GardenFruitDto;
 import com.leafup.leafupbackend.garden.api.dto.response.WeeklyGardenResDto;
+import com.leafup.leafupbackend.garden.domain.GardenFruit;
 import com.leafup.leafupbackend.garden.domain.WeeklyGarden;
 import com.leafup.leafupbackend.garden.domain.repository.WeeklyGardenRepository;
-import com.leafup.leafupbackend.garden.excepion.AlreadyHarvestedTodayException;
+import com.leafup.leafupbackend.garden.excepion.FruitAlreadyHarvestedException;
 import com.leafup.leafupbackend.garden.excepion.NoFruitToHarvestException;
 import com.leafup.leafupbackend.member.application.LevelService;
 import com.leafup.leafupbackend.member.domain.Member;
@@ -17,7 +17,6 @@ import java.time.temporal.WeekFields;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,7 +29,6 @@ public class WeeklyGardenService {
 
     private final WeeklyGardenRepository weeklyGardenRepository;
     private final MemberRepository memberRepository;
-    private final ChallengeRepository challengeRepository;
     private final LevelService levelService;
 
     @Transactional
@@ -50,40 +48,48 @@ public class WeeklyGardenService {
                     return weeklyGardenRepository.save(newGarden);
                 });
 
-        boolean isNewChallenge = weeklyGarden.addCompletedChallenge(challenge.getId());
+        boolean fruitExists = weeklyGarden.getFruits().stream()
+                .anyMatch(fruit -> fruit.getChallenge().getId().equals(challenge.getId()));
 
-        if (isNewChallenge &&
-                weeklyGarden.getCompletedChallengeIds().size() == 9 &&
-                !weeklyGarden.isBonusAwarded()) {
-            levelService.grantExpAndPoint(member, 100, "주간 텃밭 9칸 완성 보너스");
-            weeklyGarden.markBonusAsAwarded();
+        if (fruitExists) {
+            return;
+        }
+
+        GardenFruit newFruit = GardenFruit.builder()
+                .weeklyGarden(weeklyGarden)
+                .challenge(challenge)
+                .build();
+        weeklyGarden.addFruit(newFruit);
+
+        if (weeklyGarden.getFruits().size() == 9 && !weeklyGarden.isBonusAwarded()) {
             member.incrementWeeklyGardenCompletionCount();
+            weeklyGarden.markBonusAsAwarded();
         }
     }
 
     @Transactional
-    public void harvestFromGarden(String email) {
+    public void harvestFromGarden(String email, Long challengeId) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(MemberNotFoundException::new);
 
         LocalDate today = LocalDate.now();
-        if (today.equals(member.getLastGardenHarvestDate())) {
-            throw new AlreadyHarvestedTodayException();
-        }
-
         int year = today.getYear();
         int weekOfYear = today.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
 
-        boolean canHarvest = weeklyGardenRepository.findByMemberAndYearAndWeekOfYear(member, year, weekOfYear)
-                .map(garden -> !garden.getCompletedChallengeIds().isEmpty())
-                .orElse(false);
+        WeeklyGarden weeklyGarden = weeklyGardenRepository.findByMemberAndYearAndWeekOfYear(member, year, weekOfYear)
+                .orElseThrow(NoFruitToHarvestException::new);
 
-        if (!canHarvest) {
-            throw new NoFruitToHarvestException();
+        GardenFruit fruitToHarvest = weeklyGarden.getFruits().stream()
+                .filter(fruit -> fruit.getChallenge().getId().equals(challengeId))
+                .findFirst()
+                .orElseThrow(NoFruitToHarvestException::new);
+
+        if (fruitToHarvest.isHarvested()) {
+            throw new FruitAlreadyHarvestedException();
         }
 
-        levelService.grantExpAndPoint(member, 5, "텃밭 열매 수확");
-        member.updateLastGardenHarvestDate();
+        levelService.grantExpAndPoint(member, 9, "텃밭 열매 수확");
+        fruitToHarvest.harvest();
     }
 
     public WeeklyGardenResDto getWeeklyGardenStatus(String email) {
@@ -100,14 +106,15 @@ public class WeeklyGardenService {
         }
 
         WeeklyGarden weeklyGarden = weeklyGardenOpt.get();
-        List<CompletedChallengeDto> completedChallenges = weeklyGarden.getCompletedChallengeIds().stream()
-                .map(challengeId -> challengeRepository.findById(challengeId)
-                        .map(c -> CompletedChallengeDto.of(c.getId(), c.getContents()))
-                        .orElse(null))
-                .filter(Objects::nonNull)
+        List<GardenFruitDto> fruits = weeklyGarden.getFruits().stream()
+                .map(gardenFruit -> GardenFruitDto.from(
+                        gardenFruit.getChallenge().getId(),
+                        gardenFruit.getChallenge().getContents(),
+                        gardenFruit.isHarvested()
+                ))
                 .toList();
 
-        return WeeklyGardenResDto.of(year, weekOfYear, completedChallenges);
+        return WeeklyGardenResDto.of(year, weekOfYear, fruits);
     }
 
 }
