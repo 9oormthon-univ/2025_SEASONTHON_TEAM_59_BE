@@ -58,6 +58,7 @@ public class AdminService {
         LocalDate challengeDate = dmc.getChallengeDate();
 
         levelService.grantExpAndPoint(member, dmc.getChallenge().getChallengeType().getPoint(), "데일리 챌린지 승인");
+        member.addCarbonReduction(dmc.getChallenge().getCarbonReduction());
         dailyChallengeCacheService.deleteDailyChallengeCache(member.getEmail(), challengeDate,
                 dmc.getMember().getCurrentStage());
         weeklyGardenService.recordChallengeCompletion(member, dmc.getChallenge());
