@@ -25,7 +25,6 @@ public class LevelService {
     public void grantExpAndPoint(Member member, int amount, String description) {
         // 1. 재화(포인트) 부여 및 이력 기록
         pointService.addPoint(member.getEmail(), amount, description);
-        member.plusPoint(amount);
 
         // 2. 경험치 부여
         member.plusExp(amount);
@@ -103,4 +102,5 @@ public class LevelService {
         }
         return totalExp;
     }
+
 }
