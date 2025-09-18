@@ -3,6 +3,7 @@ package com.leafup.leafupbackend.member.application;
 import com.leafup.leafupbackend.challenge.domain.Challenge;
 import com.leafup.leafupbackend.challenge.domain.ChallengeType;
 import com.leafup.leafupbackend.challenge.domain.repository.ChallengeRepository;
+import com.leafup.leafupbackend.global.annotation.DistributedLock;
 import com.leafup.leafupbackend.global.cache.DailyChallengeCacheService;
 import com.leafup.leafupbackend.member.api.dto.response.DailyChallengeResDto;
 import com.leafup.leafupbackend.member.api.dto.response.DailyChallengesResDto;
@@ -16,14 +17,19 @@ import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
 import com.leafup.leafupbackend.member.exception.ChallengeOwnershipException;
 import com.leafup.leafupbackend.member.exception.DailyMemberChallengeNotFoundException;
 import com.leafup.leafupbackend.member.exception.MemberNotFoundException;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -43,7 +49,8 @@ public class DailyChallengeService {
         LocalDate today = LocalDate.now();
         int currentStage = member.getCurrentStage();
 
-        Optional<DailyChallengesResDto> cachedChallenges = dailyChallengeCacheService.getCachedChallenges(email, today, currentStage);
+        Optional<DailyChallengesResDto> cachedChallenges = dailyChallengeCacheService.getCachedChallenges(email, today,
+                currentStage);
         if (cachedChallenges.isPresent()) {
             DailyChallengesResDto dailyChallengesResDto = cachedChallenges.get();
 
@@ -100,11 +107,13 @@ public class DailyChallengeService {
     }
 
     @Transactional
+    @DistributedLock(key = "'REST_CHALLENGE:' + #email")
     public DailyChallengesResDto resetTodaysChallenges(String email) {
         Member member = findMemberByEmail(email);
         LocalDate today = LocalDate.now();
 
-        List<DailyMemberChallenge> todaysChallenges = dailyMemberChallengeRepository.findTop5ByMemberAndChallengeDateOrderByIdDesc(member, today);
+        List<DailyMemberChallenge> todaysChallenges = dailyMemberChallengeRepository
+                .findTop5ByMemberAndChallengeDateOrderByIdDesc(member, today);
         if (!todaysChallenges.isEmpty()) {
             todaysChallenges
                     .stream()
@@ -207,7 +216,8 @@ public class DailyChallengeService {
         createNewChallenges(member, today, 2, 3, 0);
     }
 
-    private List<DailyMemberChallenge> createNewChallenges(Member member, LocalDate today, int easyCount, int mediumCount, int hardCount) {
+    private List<DailyMemberChallenge> createNewChallenges(Member member, LocalDate today, int easyCount, int mediumCount,
+                                                           int hardCount) {
         List<DailyMemberChallenge> previousStageChallenges = dailyMemberChallengeRepository
                 .findTop5ByMemberAndChallengeDateOrderByIdDesc(member, today);
 
@@ -227,7 +237,8 @@ public class DailyChallengeService {
         selected.addAll(
                 selectRandomChallenges(availableChallenges.getOrDefault(ChallengeType.EASY, Collections.emptyList()), easyCount));
         selected.addAll(
-                selectRandomChallenges(availableChallenges.getOrDefault(ChallengeType.MEDIUM, Collections.emptyList()), mediumCount));
+                selectRandomChallenges(availableChallenges.getOrDefault(ChallengeType.MEDIUM, Collections.emptyList()),
+                        mediumCount));
         selected.addAll(
                 selectRandomChallenges(availableChallenges.getOrDefault(ChallengeType.HARD, Collections.emptyList()), hardCount));
 
