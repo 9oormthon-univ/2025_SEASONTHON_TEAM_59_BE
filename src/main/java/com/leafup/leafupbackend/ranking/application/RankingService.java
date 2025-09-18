@@ -3,6 +3,8 @@ package com.leafup.leafupbackend.ranking.application;
 import com.leafup.leafupbackend.member.domain.Member;
 import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
 import com.leafup.leafupbackend.member.exception.MemberNotFoundException;
+import com.leafup.leafupbackend.point.application.dto.PointAggregationDto;
+import com.leafup.leafupbackend.point.domain.repository.PointHistoryRepository;
 import com.leafup.leafupbackend.ranking.api.dto.response.MyRankingResDto;
 import com.leafup.leafupbackend.ranking.api.dto.response.RankingResDto;
 import com.leafup.leafupbackend.ranking.api.dto.response.RankingsResDto;
@@ -24,11 +26,28 @@ import org.springframework.transaction.annotation.Transactional;
 public class RankingService {
 
     private final MemberRepository memberRepository;
+    private final PointHistoryRepository pointHistoryRepository;
     private final MonthlyRankingRepository monthlyRankingRepository;
 
     public RankingsResDto getTotalRanking() {
-        List<Member> members = memberRepository.findTop100ByOrderByPointDesc();
-        return createRankingsFrom(members, member -> (long) member.getPoint());
+        List<PointAggregationDto> totalPointsByMember = pointHistoryRepository.findTotalPointsByMember();
+        AtomicInteger rank = new AtomicInteger(1);
+        List<RankingResDto> rankings = totalPointsByMember.stream()
+                .map(aggregation -> {
+                    Member member = aggregation.member();
+                    Long totalPoints = aggregation.totalPoints();
+
+                    return RankingResDto.of(
+                            rank.getAndIncrement(),
+                            member.getNickname(),
+                            member.getCode(),
+                            member.getPicture(),
+                            totalPoints
+                    );
+                })
+                .toList();
+
+        return RankingsResDto.of(rankings);
     }
 
     public RankingsResDto getStreakRanking() {
