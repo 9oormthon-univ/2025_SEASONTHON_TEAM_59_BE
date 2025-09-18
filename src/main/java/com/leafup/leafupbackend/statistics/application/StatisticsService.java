@@ -30,10 +30,12 @@ public class StatisticsService {
 
         double totalCarbonReduction = member.getCarbonReduction();
 
-        double treesPlantedEffect = totalCarbonReduction / TREE_CONVERSION_FACTOR;
-        double carEmissionReductionEffect = totalCarbonReduction / CAR_EMISSION_CONVERSION_FACTOR;
+        double treesPlantedEffect = roundToThreeDecimalPlaces(totalCarbonReduction / TREE_CONVERSION_FACTOR);
+        double carEmissionReductionEffect = roundToThreeDecimalPlaces(
+                totalCarbonReduction / CAR_EMISSION_CONVERSION_FACTOR);
 
-        return MyStatisticsResDto.of(totalCarbonReduction, treesPlantedEffect, carEmissionReductionEffect);
+        return MyStatisticsResDto.of(roundToThreeDecimalPlaces(totalCarbonReduction), treesPlantedEffect,
+                carEmissionReductionEffect);
     }
 
     public GlobalStatisticsResDto getGlobalStatistics() {
@@ -46,13 +48,15 @@ public class StatisticsService {
                 .map(startDate -> ChronoUnit.DAYS.between(startDate, LocalDate.now()) + 1)
                 .orElse(0L);
 
-        double dailyAverageReduction = (serviceOperatingDays > 0) ? totalCarbonReduction / serviceOperatingDays : 0.0;
+        double dailyAverageReduction =
+                (serviceOperatingDays > 0) ? roundToThreeDecimalPlaces(totalCarbonReduction / serviceOperatingDays) : 0.0;
 
-        double treesPlantedEffect = totalCarbonReduction / TREE_CONVERSION_FACTOR;
-        double carEmissionReductionEffect = totalCarbonReduction / CAR_EMISSION_CONVERSION_FACTOR;
+        double treesPlantedEffect = roundToThreeDecimalPlaces(totalCarbonReduction / TREE_CONVERSION_FACTOR);
+        double carEmissionReductionEffect = roundToThreeDecimalPlaces(
+                totalCarbonReduction / CAR_EMISSION_CONVERSION_FACTOR);
 
         return GlobalStatisticsResDto.of(
-                totalCarbonReduction,
+                roundToThreeDecimalPlaces(totalCarbonReduction),
                 totalMemberCount,
                 dailyAverageReduction,
                 treesPlantedEffect,
@@ -62,6 +66,10 @@ public class StatisticsService {
 
     private Member findMemberByEmail(String email) {
         return memberRepository.findByEmail(email).orElseThrow(MemberNotFoundException::new);
+    }
+
+    private double roundToThreeDecimalPlaces(double value) {
+        return Math.round(value * 1000.0) / 1000.0;
     }
 
 }

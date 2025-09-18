@@ -64,8 +64,6 @@ public class Member extends BaseEntity {
 
     private int weeklyGardenCompletionCount;
 
-    private LocalDate lastGardenHarvestDate;
-
     private int storePurchaseCount;
 
     private double carbonReduction;
@@ -93,7 +91,6 @@ public class Member extends BaseEntity {
         this.lastDailyBonusClaimedAt = null;
         this.dailyCompletionCount = 0;
         this.weeklyGardenCompletionCount = 0;
-        this.lastGardenHarvestDate = null;
         this.storePurchaseCount = 0;
         this.carbonReduction = 0.0;
     }
@@ -174,10 +171,6 @@ public class Member extends BaseEntity {
 
     public void incrementStorePurchaseCount() {
         this.storePurchaseCount++;
-    }
-
-    public void updateLastGardenHarvestDate() {
-        this.lastGardenHarvestDate = LocalDate.now();
     }
 
     public void addCarbonReduction(double amount) {

@@ -10,14 +10,13 @@ public record WeeklyGardenResDto(
         int year,
         @Schema(description = "주차")
         int weekOfYear,
-        @Schema(description = "완료한 챌린지 목록 (새싹 목록)")
-        List<CompletedChallengeDto> completedChallenges
+        List<GardenFruitDto> fruits
 ) {
-    public static WeeklyGardenResDto of(int year, int weekOfYear, List<CompletedChallengeDto> completedChallenges) {
+    public static WeeklyGardenResDto of(int year, int weekOfYear, List<GardenFruitDto> fruits) {
         return WeeklyGardenResDto.builder()
                 .year(year)
                 .weekOfYear(weekOfYear)
-                .completedChallenges(completedChallenges)
+                .fruits(fruits)
                 .build();
     }
 }
