@@ -1,8 +1,8 @@
 package com.leafup.leafupbackend.auth.api.docs;
 
 import com.github.giwoong01.springapicommon.template.RspTemplate;
-import com.leafup.leafupbackend.auth.api.dto.request.RefreshTokenReqDto;
 import com.leafup.leafupbackend.auth.api.dto.response.MemberAndTokenResDto;
+import com.leafup.leafupbackend.auth.util.CookieUtil;
 import com.leafup.leafupbackend.global.jwt.api.dto.TokenDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -12,8 +12,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 public interface AuthControllerDocs {
@@ -31,12 +31,14 @@ public interface AuthControllerDocs {
     ResponseEntity<RspTemplate<MemberAndTokenResDto>> generateAccessAndRefreshToken(
             @Parameter(name = "provider", description = "소셜 타입(google, kakao)", in = ParameterIn.PATH)
             @PathVariable(name = "provider") String provider,
-            @RequestParam("code") String code);
+            @RequestParam("code") String code,
+            HttpServletResponse response);
 
     @Operation(summary = "액세스 토큰 재발급", description = "리프레쉬 토큰으로 액세스 토큰을 발급합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "토큰 발급 성공")
     })
-    ResponseEntity<RspTemplate<TokenDto>> generateAccessToken(@RequestBody RefreshTokenReqDto refreshTokenReqDto);
+    ResponseEntity<RspTemplate<TokenDto>> generateAccessToken(
+            @CookieValue(name = CookieUtil.REFRESH_TOKEN_COOKIE_NAME) String refreshToken);
 
 }

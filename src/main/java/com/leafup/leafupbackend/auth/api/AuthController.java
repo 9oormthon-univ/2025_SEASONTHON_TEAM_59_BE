@@ -9,6 +9,7 @@ import com.leafup.leafupbackend.auth.application.AuthMemberService;
 import com.leafup.leafupbackend.auth.application.AuthService;
 import com.leafup.leafupbackend.auth.application.AuthServiceFactory;
 import com.leafup.leafupbackend.auth.application.TokenService;
+import com.leafup.leafupbackend.auth.util.CookieUtil;
 import com.leafup.leafupbackend.global.jwt.api.dto.TokenDto;
 import com.leafup.leafupbackend.member.api.dto.response.MemberInfoResDto;
 import com.leafup.leafupbackend.member.domain.SocialType;
@@ -20,10 +21,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,6 +38,7 @@ public class AuthController implements AuthControllerDocs {
     private final AuthServiceFactory authServiceFactory;
     private final AuthMemberService memberService;
     private final TokenService tokenService;
+    private final CookieUtil cookieUtil;
 
     @GetMapping("/login")
     public void redirectToProvider(@RequestParam("provider") String provider, HttpServletResponse response) throws IOException {
@@ -53,13 +55,16 @@ public class AuthController implements AuthControllerDocs {
     public ResponseEntity<RspTemplate<MemberAndTokenResDto>> generateAccessAndRefreshToken(
             @Parameter(name = "provider", description = "소셜 타입(google, kakao)", in = ParameterIn.PATH)
             @PathVariable(name = "provider") String provider,
-            @RequestParam("code") String code) {
+            @RequestParam("code") String code,
+            HttpServletResponse response) {
         AuthService authService = authServiceFactory.getAuthService(provider);
         UserInfo userInfo = authService.getUserInfo(code);
 
         MemberInfoResDto getMemberDto = memberService.saveUserInfo(userInfo,
                 SocialType.valueOf(provider.toUpperCase()));
         TokenDto getToken = tokenService.getToken(getMemberDto);
+
+        cookieUtil.addRefreshTokenCookie(response, getToken.refreshToken());
 
         return RspTemplate.<MemberAndTokenResDto>builder()
                 .statusCode(HttpStatus.OK)
@@ -69,13 +74,15 @@ public class AuthController implements AuthControllerDocs {
     }
 
     @PostMapping("/token/access")
-    public ResponseEntity<RspTemplate<TokenDto>> generateAccessToken(@RequestBody RefreshTokenReqDto refreshTokenReqDto) {
-        TokenDto getToken = tokenService.generateAccessToken(refreshTokenReqDto);
+    public ResponseEntity<RspTemplate<TokenDto>> generateAccessToken(
+            @CookieValue(name = CookieUtil.REFRESH_TOKEN_COOKIE_NAME) String refreshToken) {
+        RefreshTokenReqDto refreshTokenReqDto = new RefreshTokenReqDto(refreshToken);
+        TokenDto newAccessToken = tokenService.generateAccessToken(refreshTokenReqDto);
 
         return RspTemplate.<TokenDto>builder()
                 .statusCode(HttpStatus.OK)
                 .message("엑세스 토큰 발급")
-                .data(getToken)
+                .data(newAccessToken)
                 .build()
                 .toResponseEntity();
     }
