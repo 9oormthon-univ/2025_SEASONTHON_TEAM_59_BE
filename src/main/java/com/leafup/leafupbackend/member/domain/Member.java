@@ -1,6 +1,7 @@
 package com.leafup.leafupbackend.member.domain;
 
 import com.leafup.leafupbackend.achievement.domain.MemberAchievement;
+import com.leafup.leafupbackend.friend.domain.Friendship;
 import com.leafup.leafupbackend.global.entity.BaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -71,14 +72,22 @@ public class Member extends BaseEntity {
 
     private double carbonReduction;
 
+    private String introduction;
+
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberAchievement> memberAchievements = new ArrayList<>();
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberAvatar> memberAvatars = new ArrayList<>();
 
+    @OneToMany(mappedBy = "requester", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Friendship> sentFriendships = new ArrayList<>();
+
+    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Friendship> receivedFriendships = new ArrayList<>();
+
     @Builder
-    private Member(String email, String name, String picture, SocialType socialType) {
+    private Member(String email, String name, String picture, SocialType socialType, String introduction) {
         this.email = email;
         this.name = name;
         this.picture = picture;
@@ -96,6 +105,7 @@ public class Member extends BaseEntity {
         this.weeklyGardenCompletionCount = 0;
         this.storePurchaseCount = 0;
         this.carbonReduction = 0.0;
+        this.introduction = introduction;
     }
 
     public void updateFirstLogin() {
@@ -178,6 +188,10 @@ public class Member extends BaseEntity {
 
     public void addCarbonReduction(double amount) {
         this.carbonReduction += amount;
+    }
+
+    public void updateIntroduction(String introduction) {
+        this.introduction = introduction;
     }
 
 }

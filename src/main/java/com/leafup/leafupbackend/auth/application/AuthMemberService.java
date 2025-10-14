@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class AuthMemberService {
 
+    private final static String INTRODUCTION = "저와 함께 환경을 지켜보아요.";
+
     private final MemberRepository memberRepository;
     private final AvatarRepository avatarRepository;
     private final LevelService levelService;
@@ -71,6 +73,7 @@ public class AuthMemberService {
                         .name(name)
                         .picture(userPicture)
                         .socialType(provider)
+                        .introduction(INTRODUCTION)
                         .build()
         );
     }
