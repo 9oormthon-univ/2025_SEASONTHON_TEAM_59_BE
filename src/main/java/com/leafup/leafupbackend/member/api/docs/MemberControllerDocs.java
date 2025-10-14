@@ -3,6 +3,7 @@ package com.leafup.leafupbackend.member.api.docs;
 import com.github.giwoong01.springapicommon.template.RspTemplate;
 import com.leafup.leafupbackend.global.annotation.AuthenticatedEmail;
 import com.leafup.leafupbackend.member.api.dto.request.OnboardingReqDto;
+import com.leafup.leafupbackend.member.api.dto.request.UpdateIntroductionReqDto;
 import com.leafup.leafupbackend.member.api.dto.request.UpdateNicknameReqDto;
 import com.leafup.leafupbackend.member.api.dto.response.MemberInfoResDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,5 +40,12 @@ public interface MemberControllerDocs {
             @ApiResponse(responseCode = "200", description = "일일 챌린지 3개 완료 보너스 요청 성공")
     })
     ResponseEntity<RspTemplate<Void>> claimDailyBonus(@AuthenticatedEmail String email);
+
+    @Operation(summary = "사용자 소개 변경", description = "사용자 소개를 변경합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "소개 변경 성공")
+    })
+    ResponseEntity<RspTemplate<Void>> updateIntroduction(@AuthenticatedEmail String email,
+                                                         @Valid @RequestBody UpdateIntroductionReqDto updateIntroductionReqDto);
 
 }

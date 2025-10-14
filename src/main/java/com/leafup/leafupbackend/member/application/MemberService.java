@@ -1,6 +1,7 @@
 package com.leafup.leafupbackend.member.application;
 
 import com.leafup.leafupbackend.member.api.dto.request.OnboardingReqDto;
+import com.leafup.leafupbackend.member.api.dto.request.UpdateIntroductionReqDto;
 import com.leafup.leafupbackend.member.api.dto.request.UpdateNicknameReqDto;
 import com.leafup.leafupbackend.member.api.dto.response.MemberInfoResDto;
 import com.leafup.leafupbackend.member.domain.ChallengeStatus;
@@ -85,6 +86,17 @@ public class MemberService {
         } else {
             throw new DailyBonusNotEligibleException();
         }
+    }
+
+    @Transactional
+    public void updateIntroduction(String email, UpdateIntroductionReqDto updateIntroductionReqDto) {
+        Member member = memberRepository.findByEmail(email).orElseThrow(MemberNotFoundException::new);
+
+        if (member.getIntroduction().equals(updateIntroductionReqDto.introduction())) {
+            return;
+        }
+
+        member.updateIntroduction(updateIntroductionReqDto.introduction());
     }
 
     private String randomAlphaNumeric(int length) {
