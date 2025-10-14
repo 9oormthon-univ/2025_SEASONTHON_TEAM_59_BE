@@ -1,6 +1,7 @@
 package com.leafup.leafupbackend.member.domain;
 
 import com.leafup.leafupbackend.achievement.domain.MemberAchievement;
+import com.leafup.leafupbackend.friend.domain.Friendship;
 import com.leafup.leafupbackend.global.entity.BaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -78,6 +79,12 @@ public class Member extends BaseEntity {
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberAvatar> memberAvatars = new ArrayList<>();
+
+    @OneToMany(mappedBy = "requester", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Friendship> sentFriendships = new ArrayList<>();
+
+    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Friendship> receivedFriendships = new ArrayList<>();
 
     @Builder
     private Member(String email, String name, String picture, SocialType socialType, String introduction) {
