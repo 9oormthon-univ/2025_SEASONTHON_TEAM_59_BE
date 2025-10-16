@@ -3,16 +3,21 @@ package com.leafup.leafupbackend.friend.application;
 import com.leafup.leafupbackend.friend.api.dto.request.FriendReqDto;
 import com.leafup.leafupbackend.friend.api.dto.response.FriendResDto;
 import com.leafup.leafupbackend.friend.api.dto.response.FriendsResDto;
+import com.leafup.leafupbackend.friend.api.dto.response.FriendshipResDto;
+import com.leafup.leafupbackend.friend.api.dto.response.FriendshipsResDto;
 import com.leafup.leafupbackend.friend.domain.Friendship;
 import com.leafup.leafupbackend.friend.domain.FriendshipStatus;
 import com.leafup.leafupbackend.friend.domain.repository.FriendshipRepository;
+import com.leafup.leafupbackend.friend.exception.FriendNotFoundException;
 import com.leafup.leafupbackend.friend.exception.FriendshipAlreadyExistsException;
 import com.leafup.leafupbackend.friend.exception.FriendshipNotFoundException;
 import com.leafup.leafupbackend.friend.exception.InvalidFriendRequestException;
 import com.leafup.leafupbackend.member.domain.Member;
+import com.leafup.leafupbackend.member.domain.repository.MemberAvatarRepository;
 import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
 import com.leafup.leafupbackend.member.exception.MemberNotFoundException;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +29,26 @@ public class FriendService {
 
     private final MemberRepository memberRepository;
     private final FriendshipRepository friendshipRepository;
+    private final MemberAvatarRepository memberAvatarRepository;
+
+    public FriendResDto getSearchMember(String nicknameWithCode) {
+        String[] parts = nicknameWithCode.split("#");
+
+        if (parts.length != 2) {
+            throw new InvalidFriendRequestException("닉네임#코드 형식이 올바르지 않습니다.");
+        }
+
+        String nickname = parts[0];
+        String code = parts[1];
+
+        Member friend = memberRepository.findByNicknameAndCode(nickname, code).orElseThrow(MemberNotFoundException::new);
+
+        String avatarUrl = memberAvatarRepository.findEquippedByMemberWithAvatar(friend)
+                .map(memberAvatar -> memberAvatar.getAvatar().getAvatarUrl())
+                .orElse(null);
+
+        return FriendResDto.of(friend, avatarUrl, List.of());
+    }
 
     @Transactional
     public void sendFriendRequest(String email, FriendReqDto friendReqDto) {
@@ -52,20 +77,22 @@ public class FriendService {
         friendshipRepository.save(friendship);
     }
 
-    public FriendsResDto getFriendRequests(String email) {
+    public FriendshipsResDto getFriendRequests(String email) {
         Member receiver = memberRepository.findByEmail(email).orElseThrow(MemberNotFoundException::new);
         List<Friendship> friendships = friendshipRepository.findByReceiverAndStatus(receiver, FriendshipStatus.PENDING);
 
-        List<FriendResDto> friendResDtos = friendships.stream()
-                .map(friendship -> FriendResDto.of(friendship.getId(),
-                        friendship.getRequester().getNickname(),
-                        friendship.getRequester().getCode(),
-                        friendship.getRequester().getPicture(),
-                        friendship.getRequester().getUpdatedAt())
-                )
+        List<FriendshipResDto> friendResDtos = friendships.stream()
+                .map(friendship -> {
+                    Member requester = friendship.getRequester();
+                    return FriendshipResDto.builder()
+                            .friendshipId(friendship.getId())
+                            .nickname(requester.getNickname() + "#" + requester.getCode())
+                            .picture(requester.getPicture())
+                            .lastAccessedAt(requester.getUpdatedAt()).build();
+                })
                 .toList();
 
-        return FriendsResDto.from(friendResDtos);
+        return FriendshipsResDto.from(friendResDtos);
     }
 
     public FriendsResDto getFriends(String email) {
@@ -74,15 +101,15 @@ public class FriendService {
 
         List<FriendResDto> friendResDtos = friendships.stream()
                 .map(friendship -> {
-                            Member friend =
-                                    friendship.getRequester().equals(member) ? friendship.getReceiver() : friendship.getRequester();
-                            return FriendResDto.of(friend.getId(),
-                                    friend.getNickname(),
-                                    friend.getCode(),
-                                    friend.getPicture(),
-                                    friend.getUpdatedAt());
-                        }
-                )
+                    Member friend =
+                            friendship.getRequester().equals(member) ? friendship.getReceiver() : friendship.getRequester();
+                    return FriendResDto.builder()
+                            .memberId(friend.getId())
+                            .nickname(friend.getNickname() + "#" + friend.getCode())
+                            .picture(friend.getPicture())
+                            .lastAccessedAt(friend.getUpdatedAt())
+                            .build();
+                })
                 .toList();
 
         return FriendsResDto.from(friendResDtos);
@@ -102,6 +129,24 @@ public class FriendService {
         } else if (status == FriendshipStatus.REJECTED) {
             friendship.reject();
         }
+    }
+
+    public FriendResDto getFriendDetails(String email, Long friendId) {
+        Member currentUser = memberRepository.findByEmail(email).orElseThrow(MemberNotFoundException::new);
+
+        Member friend = memberRepository.findMemberWithDetailsById(friendId).orElseThrow(MemberNotFoundException::new);
+
+        friendshipRepository.findAcceptedFriendshipBetween(currentUser, friend).orElseThrow(FriendNotFoundException::new);
+
+        String avatarUrl = memberAvatarRepository.findEquippedByMemberWithAvatar(friend)
+                .map(memberAvatar -> memberAvatar.getAvatar().getAvatarUrl())
+                .orElse(null);
+
+        List<String> achievements = friend.getMemberAchievements().stream()
+                .map(memberAchievement -> memberAchievement.getAchievement().getName())
+                .collect(Collectors.toList());
+
+        return FriendResDto.of(friend, avatarUrl, achievements);
     }
 
 }
