@@ -26,4 +26,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Optional<Member> findByNicknameAndCode(String nickname, String code);
 
+    @Query("SELECT m FROM Member m LEFT JOIN FETCH m.memberAchievements ma LEFT JOIN FETCH ma.achievement WHERE m.id = :id")
+    Optional<Member> findMemberWithDetailsById(@Param("id") Long id);
+
 }

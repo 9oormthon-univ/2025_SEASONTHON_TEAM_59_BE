@@ -6,8 +6,8 @@ import java.util.List;
 import lombok.Builder;
 
 @Builder
-public record FriendResDto(
-        Long memberId,
+public record FriendshipResDto(
+        Long friendshipId,
         String nickname,
         String introduction,
         String picture,
@@ -17,9 +17,9 @@ public record FriendResDto(
         String avatarUrl,
         List<String> achievements
 ) {
-    public static FriendResDto of(Member friend, String avatarUrl, List<String> achievements) {
-        return FriendResDto.builder()
-                .memberId(friend.getId())
+    public static FriendshipResDto of(Member friend, String avatarUrl, List<String> achievements) {
+        return FriendshipResDto.builder()
+                .friendshipId(friend.getId())
                 .nickname(friend.getNickname() + "#" + friend.getCode())
                 .introduction(friend.getIntroduction())
                 .picture(friend.getPicture())
