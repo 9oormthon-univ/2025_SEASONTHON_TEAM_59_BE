@@ -3,6 +3,7 @@ package com.leafup.leafupbackend.achievement.application;
 import com.leafup.leafupbackend.achievement.api.dto.response.AchievementStatusResDto;
 import com.leafup.leafupbackend.achievement.api.dto.response.ClaimedAchievementResDto;
 import com.leafup.leafupbackend.achievement.domain.Achievement;
+import com.leafup.leafupbackend.achievement.domain.AchievementType;
 import com.leafup.leafupbackend.achievement.domain.MemberAchievement;
 import com.leafup.leafupbackend.achievement.domain.repository.AchievementRepository;
 import com.leafup.leafupbackend.achievement.domain.repository.MemberAchievementRepository;
@@ -14,7 +15,9 @@ import com.leafup.leafupbackend.member.domain.repository.DailyMemberChallengeRep
 import com.leafup.leafupbackend.member.domain.repository.MemberRepository;
 import com.leafup.leafupbackend.member.exception.MemberNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -55,13 +58,27 @@ public class AchievementService {
         Member member = memberRepository.findByEmailWithAchievements(email)
                 .orElseThrow(MemberNotFoundException::new);
 
-        return member.getMemberAchievements().stream()
+        List<MemberAchievement> claimedAchievements = member.getMemberAchievements();
+
+        Map<AchievementType, MemberAchievement> latestAchievements = new HashMap<>();
+        for (MemberAchievement memberAchievement : claimedAchievements) {
+            Achievement achievement = memberAchievement.getAchievement();
+            AchievementType type = achievement.getType();
+            int level = achievement.getLevel();
+
+            if (!latestAchievements.containsKey(type) || level > latestAchievements.get(type).getAchievement().getLevel()) {
+                latestAchievements.put(type, memberAchievement);
+            }
+        }
+
+        return latestAchievements.values().stream()
                 .map(MemberAchievement::getAchievement)
-                .map(ma -> {
-                    return ClaimedAchievementResDto.of(ma.getId(),
-                            ma.getName(),
-                            ma.getDescription());
-                })
+                .map(achievement -> ClaimedAchievementResDto.of(
+                                achievement.getId(),
+                                achievement.getName(),
+                                achievement.getDescription()
+                        )
+                )
                 .toList();
     }
 
