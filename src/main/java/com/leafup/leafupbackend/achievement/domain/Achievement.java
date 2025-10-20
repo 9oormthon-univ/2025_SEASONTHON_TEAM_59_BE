@@ -27,12 +27,16 @@ public class Achievement extends BaseEntity {
     @Column(nullable = false)
     private int requiredCount;
 
+    @Column(nullable = false)
+    private int level;
+
     @Builder
-    private Achievement(String name, String description, AchievementType type, int requiredCount) {
+    private Achievement(String name, String description, AchievementType type, int requiredCount, int level) {
         this.name = name;
         this.description = description;
         this.type = type;
         this.requiredCount = requiredCount;
+        this.level = level;
     }
 
 }
