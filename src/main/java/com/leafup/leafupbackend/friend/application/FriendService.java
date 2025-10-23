@@ -107,6 +107,7 @@ public class FriendService {
                             .memberId(friend.getId())
                             .nickname(friend.getNickname() + "#" + friend.getCode())
                             .picture(friend.getPicture())
+                            .level(friend.getLevel())
                             .lastAccessedAt(friend.getUpdatedAt())
                             .build();
                 })
